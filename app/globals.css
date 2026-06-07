@@ -1,0 +1,95 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: oklch(0.965 0.006 240);
+  --foreground: oklch(0.18 0.04 250);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.18 0.04 250);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.18 0.04 250);
+  --primary: oklch(0.28 0.08 258);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.94 0.01 240);
+  --secondary-foreground: oklch(0.28 0.08 258);
+  --muted: oklch(0.93 0.008 240);
+  --muted-foreground: oklch(0.52 0.03 248);
+  --accent: oklch(0.72 0.18 48);
+  --accent-foreground: oklch(1 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.88 0.01 240);
+  --input: oklch(0.92 0.008 240);
+  --ring: oklch(0.28 0.08 258);
+  --chart-1: oklch(0.28 0.08 258);
+  --chart-2: oklch(0.72 0.18 48);
+  --chart-3: oklch(0.52 0.03 248);
+  --chart-4: oklch(0.65 0.12 200);
+  --chart-5: oklch(0.5 0.15 150);
+  --radius: 0.75rem;
+
+  /* CondoEase custom tokens */
+  --navy: #243660;
+  --navy-dark: #1a2847;
+  --navy-icon: #243B6B;
+  --orange: #FF8A1C;
+  --orange-light: #FFF3E0;
+  --surface: #F4F6FA;
+  --card-white: #FFFFFF;
+  --text-primary: #1A2847;
+  --text-secondary: #5A6A8A;
+  --text-muted: #9AABC4;
+  --status-paid: #22C55E;
+  --status-unpaid: #FF8A1C;
+  --status-overdue: #EF4444;
+}
+
+@theme inline {
+  --font-sans: 'Inter', 'Inter Fallback', system-ui, sans-serif;
+  --font-mono: 'Geist Mono', 'Geist Mono Fallback';
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+}
+
+/* Mobile scrolling */
+.mobile-scroll {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.mobile-scroll::-webkit-scrollbar {
+  display: none;
+}

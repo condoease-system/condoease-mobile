@@ -1,0 +1,7 @@
+android
+.next
+out
+node_modules
+*.log
+*.tsbuildinfo
+.env*
