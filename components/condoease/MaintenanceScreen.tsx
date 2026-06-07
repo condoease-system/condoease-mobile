@@ -1,7 +1,7 @@
 'use client'
 
 import { Plus, Wrench, ChevronRight } from 'lucide-react'
-import { useMobileData, type MaintenanceStatus, type MaintenancePriority } from './mobile-data'
+import { useMobileData, type MaintenanceStatus } from './mobile-data'
 
 interface MaintenanceScreenProps {
   onNavigate: (screen: string, params?: Record<string, unknown>) => void
@@ -12,13 +12,6 @@ const statusConfig: Record<MaintenanceStatus, { label: string; bg: string; text:
   'in-progress': { label: 'In Progress', bg: '#EFF6FF', text: '#3B82F6' },
   resolved: { label: 'Resolved', bg: '#F0FDF4', text: '#22C55E' },
   cancelled: { label: 'Cancelled', bg: '#F8FAFC', text: '#9AABC4' },
-}
-
-const priorityConfig: Record<MaintenancePriority, { label: string; color: string }> = {
-  low: { label: 'Low', color: '#22C55E' },
-  medium: { label: 'Medium', color: '#FF8A1C' },
-  high: { label: 'High', color: '#F97316' },
-  urgent: { label: 'Urgent', color: '#EF4444' },
 }
 
 export function MaintenanceScreen({ onNavigate }: MaintenanceScreenProps) {
@@ -77,7 +70,6 @@ export function MaintenanceScreen({ onNavigate }: MaintenanceScreenProps) {
             <div className="flex flex-col gap-3">
               {active.map(req => {
                 const sc = statusConfig[req.status]
-                const pc = priorityConfig[req.priority]
                 return (
                   <button
                     key={req.id}
@@ -97,9 +89,6 @@ export function MaintenanceScreen({ onNavigate }: MaintenanceScreenProps) {
                         <div className="flex items-center gap-2 mt-2">
                           <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: sc.bg, color: sc.text }}>
                             {sc.label}
-                          </span>
-                          <span className="text-xs font-semibold" style={{ color: pc.color }}>
-                            {pc.label} Priority
                           </span>
                         </div>
                       </div>

@@ -1,7 +1,7 @@
 'use client'
 
 import { ChevronLeft, Wrench, User, MessageSquare, Clock } from 'lucide-react'
-import { useMobileData, type MaintenanceStatus, type MaintenancePriority } from './mobile-data'
+import { useMobileData, type MaintenanceStatus } from './mobile-data'
 
 interface MaintenanceDetailScreenProps {
   requestId: string
@@ -13,13 +13,6 @@ const statusConfig: Record<MaintenanceStatus, { label: string; bg: string; text:
   'in-progress': { label: 'In Progress', bg: '#EFF6FF', text: '#3B82F6', step: 2 },
   resolved: { label: 'Resolved', bg: '#F0FDF4', text: '#22C55E', step: 3 },
   cancelled: { label: 'Cancelled', bg: '#F8FAFC', text: '#9AABC4', step: 0 },
-}
-
-const priorityConfig: Record<MaintenancePriority, { label: string; color: string }> = {
-  low: { label: 'Low Priority', color: '#22C55E' },
-  medium: { label: 'Medium Priority', color: '#FF8A1C' },
-  high: { label: 'High Priority', color: '#F97316' },
-  urgent: { label: 'Urgent', color: '#EF4444' },
 }
 
 const STEPS = ['Submitted', 'Reviewed', 'In Progress', 'Resolved']
@@ -39,7 +32,6 @@ export function MaintenanceDetailScreen({ requestId, onBack }: MaintenanceDetail
     )
   }
   const sc = statusConfig[req.status]
-  const pc = priorityConfig[req.priority]
   const currentStep = sc.step
 
   return (
@@ -63,7 +55,6 @@ export function MaintenanceDetailScreen({ requestId, onBack }: MaintenanceDetail
               <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: sc.bg, color: sc.text }}>
                 {sc.label}
               </span>
-              <span className="text-xs font-bold" style={{ color: pc.color }}>{pc.label}</span>
             </div>
           </div>
         </div>

@@ -70,8 +70,8 @@ type MobileData = {
   createMaintenanceRequest: (payload: {
     title: string
     category: string
-    priority: MaintenancePriority
     description: string
+    media?: string[]
   }) => Promise<void>
 }
 
@@ -200,13 +200,14 @@ export function MobileDataProvider({ user, children }: { user: ApiUser | null; c
   const createMaintenanceRequest = useCallback(async (payload: {
     title: string
     category: string
-    priority: MaintenancePriority
     description: string
+    media?: string[]
   }) => {
     await createRecord<MaintenanceRecord>('/maintenance-requests', {
       category: payload.category,
-      maintenanceType: payload.priority === 'urgent' ? 'Emergency' : 'Routine',
+      maintenanceType: 'Routine',
       description: `${payload.title}\n\n${payload.description}`,
+      media: payload.media ?? [],
     })
     await refresh()
   }, [refresh])

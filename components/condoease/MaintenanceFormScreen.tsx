@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState, type ChangeEvent } from 'react'
 import { ChevronLeft, ChevronDown, Camera, CheckCircle } from 'lucide-react'
-import { useMobileData, type MaintenancePriority } from './mobile-data'
+import { useMobileData } from './mobile-data'
 
 interface MaintenanceFormScreenProps {
   onNavigate: (screen: string, params?: Record<string, unknown>) => void
@@ -10,25 +10,33 @@ interface MaintenanceFormScreenProps {
 }
 
 const CATEGORIES = ['Plumbing', 'Electrical', 'HVAC', 'Carpentry', 'Painting', 'Appliances', 'Pest Control', 'Other']
-const PRIORITIES = [
-  { value: 'low', label: 'Low', desc: 'No immediate impact', color: '#22C55E' },
-  { value: 'medium', label: 'Medium', desc: 'Somewhat inconvenient', color: '#FF8A1C' },
-  { value: 'high', label: 'High', desc: 'Significantly affecting daily life', color: '#F97316' },
-  { value: 'urgent', label: 'Urgent', desc: 'Safety hazard or emergency', color: '#EF4444' },
-]
 
 export function MaintenanceFormScreen({ onNavigate, onBack }: MaintenanceFormScreenProps) {
   const { createMaintenanceRequest } = useMobileData()
+  const photoInputRef = useRef<HTMLInputElement>(null)
   const [title, setTitle] = useState('')
   const [category, setCategory] = useState('')
-  const [priority, setPriority] = useState<MaintenancePriority | ''>('')
   const [description, setDescription] = useState('')
+  const [photos, setPhotos] = useState<File[]>([])
   const [showCategoryPicker, setShowCategoryPicker] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const isValid = title.trim() && category && priority && description.trim()
+  const isValid = title.trim() && category && description.trim()
+
+  const handlePhotos = (event: ChangeEvent<HTMLInputElement>) => {
+    const selected = Array.from(event.target.files ?? [])
+    const validPhotos = selected.filter((file) => ['image/jpeg', 'image/png'].includes(file.type) && file.size <= 10 * 1024 * 1024)
+    setPhotos(validPhotos)
+
+    if (selected.length !== validPhotos.length) {
+      setError('Only JPEG or PNG photos up to 10MB each can be attached.')
+      return
+    }
+
+    setError(null)
+  }
 
   const handleSubmit = async () => {
     if (!isValid) return
@@ -39,8 +47,8 @@ export function MaintenanceFormScreen({ onNavigate, onBack }: MaintenanceFormScr
       await createMaintenanceRequest({
         title,
         category,
-        priority: priority as MaintenancePriority,
         description,
+        media: photos.map((photo) => photo.name),
       })
       setSubmitted(true)
     } catch (submitError) {
@@ -140,27 +148,6 @@ export function MaintenanceFormScreen({ onNavigate, onBack }: MaintenanceFormScr
           )}
         </div>
 
-        {/* Priority */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-semibold" style={{ color: '#1A2847' }}>Priority Level *</label>
-          <div className="grid grid-cols-2 gap-2">
-            {PRIORITIES.map(p => (
-              <button
-                key={p.value}
-                onClick={() => setPriority(p.value as MaintenancePriority)}
-                className="rounded-2xl p-3 text-left transition-all"
-                style={{
-                  border: priority === p.value ? `2px solid ${p.color}` : '2px solid #E2E8F0',
-                  backgroundColor: priority === p.value ? `${p.color}15` : 'white',
-                }}
-              >
-                <p className="text-sm font-bold" style={{ color: p.color }}>{p.label}</p>
-                <p className="text-xs mt-0.5" style={{ color: '#9AABC4' }}>{p.desc}</p>
-              </button>
-            ))}
-          </div>
-        </div>
-
         {/* Description */}
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-semibold" style={{ color: '#1A2847' }}>Description *</label>
@@ -177,7 +164,17 @@ export function MaintenanceFormScreen({ onNavigate, onBack }: MaintenanceFormScr
         {/* Photo Upload */}
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-semibold" style={{ color: '#1A2847' }}>Photos (Optional)</label>
+          <input
+            ref={photoInputRef}
+            type="file"
+            accept="image/jpeg,image/png"
+            multiple
+            className="hidden"
+            onChange={handlePhotos}
+          />
           <button
+            type="button"
+            onClick={() => photoInputRef.current?.click()}
             className="bg-white rounded-2xl p-6 flex flex-col items-center gap-3 border-2 border-dashed"
             style={{ borderColor: '#C7D2FE' }}
           >
@@ -185,10 +182,17 @@ export function MaintenanceFormScreen({ onNavigate, onBack }: MaintenanceFormScr
               <Camera size={22} color="#243660" />
             </div>
             <div className="text-center">
-              <p className="text-sm font-semibold" style={{ color: '#243660' }}>Tap to attach photos</p>
+              <p className="text-sm font-semibold" style={{ color: '#243660' }}>
+                {photos.length > 0 ? `${photos.length} photo${photos.length === 1 ? '' : 's'} attached` : 'Tap to attach photos'}
+              </p>
               <p className="text-xs mt-0.5" style={{ color: '#9AABC4' }}>JPEG, PNG up to 10MB each</p>
             </div>
           </button>
+          {photos.length > 0 && (
+            <div className="rounded-2xl bg-white px-4 py-3 text-xs" style={{ border: '1.5px solid #E2E8F0', color: '#5A6A8A' }}>
+              {photos.map((photo) => photo.name).join(', ')}
+            </div>
+          )}
         </div>
 
         {/* Submit */}
