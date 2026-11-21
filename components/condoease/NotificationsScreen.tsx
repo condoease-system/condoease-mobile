@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { AlertCircle, AlertTriangle, Bell, CreditCard, Megaphone, Wrench, type LucideIcon } from 'lucide-react'
 import { useMobileData } from './mobile-data'
-import { EmptyState, IconChip, InlineAlert, Screen, ScreenBody, ScreenHeader, toneStyles, type Tone } from './mobile-kit'
+import { formatPeso, EmptyState, IconChip, InlineAlert, Screen, ScreenBody, ScreenHeader, toneStyles, type Tone } from './mobile-kit'
 import { AnnouncementCard } from './AnnouncementsScreen'
 import { cn } from '@/lib/utils'
 
@@ -43,7 +43,7 @@ export function NotificationsScreen({ initialTab = 'notifications', onBack, onNa
     ...overdueBills.slice(0, 3).map(bill => ({
       id: `overdue-${bill.id}`,
       title: 'Overdue bill',
-      message: `${bill.month} bill of PHP ${bill.amount.toLocaleString()} is past due.`,
+      message: `${bill.month} bill of ${formatPeso(bill.amount)} is past due.`,
       time: `Due ${bill.dueDate}`,
       tone: 'urgent' as const,
       icon: AlertTriangle,

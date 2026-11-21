@@ -48,7 +48,7 @@ export function AnnouncementDetailScreen({ announcementId, onBack }: Announcemen
         <MobileCard className="flex items-center gap-4 p-4">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium text-muted-foreground">{ann.date}</span>
+            <span className="text-sm font-medium text-muted-foreground">{ann.date || '-'}</span>
           </div>
           <div className="h-4 w-px bg-border" />
           <div className="flex items-center gap-2">
@@ -59,7 +59,7 @@ export function AnnouncementDetailScreen({ announcementId, onBack }: Announcemen
 
         {/* Content */}
         <MobileCard className="p-5">
-          <p className="text-sm leading-[1.7] text-foreground">{ann.content}</p>
+          <p className="whitespace-pre-line break-words text-sm leading-[1.7] text-foreground">{ann.content}</p>
         </MobileCard>
 
         {/* Management info */}

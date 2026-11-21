@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { CheckCircle, Download, Receipt, Share2 } from 'lucide-react'
 import { useMobileData } from './mobile-data'
-import { DetailRow, EmptyState, MobileButton, MobileCard, Screen, ScreenBody, ScreenHeader } from './mobile-kit'
+import { formatPeso, DetailRow, EmptyState, MobileButton, MobileCard, Screen, ScreenBody, ScreenHeader } from './mobile-kit'
 import { downloadPaymentReceipt, fallbackReference, sharePaymentReceipt } from './payment-receipt'
 import { apiRequest } from '@/lib/api'
 
@@ -98,7 +98,7 @@ export function ReceiptScreen({ billId, onBack, autoConfirmed = false }: Receipt
             </div>
             <p className="text-sm font-medium text-muted-foreground">Amount Paid</p>
             <p className="mt-1 text-3xl font-semibold tracking-tight tabular-nums text-foreground">
-              PHP {bill.amount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+              {formatPeso(bill.amount)}
             </p>
             <p className="mt-1.5 text-sm text-muted-foreground">{bill.month}</p>
           </div>
@@ -107,8 +107,8 @@ export function ReceiptScreen({ billId, onBack, autoConfirmed = false }: Receipt
             <div className="divide-y divide-border">
               {[
                 { label: 'Verification Reference', value: reference },
-                { label: 'Tenant', value: tenant.name },
-                { label: 'Unit', value: tenant.unit },
+                { label: 'Tenant', value: tenant.name || '-' },
+                { label: 'Unit', value: tenant.unit || '-' },
                 { label: 'Payment Date', value: bill.paidDate || '-' },
                 { label: 'Chain Sequence', value: bill.chainSequence ? `#${bill.chainSequence}` : '-' },
                 { label: 'Payment Hash', value: bill.verificationHash || '-' },
@@ -122,14 +122,14 @@ export function ReceiptScreen({ billId, onBack, autoConfirmed = false }: Receipt
               {bill.breakdown.map((item, index) => (
                 <div key={index} className="flex justify-between text-xs">
                   <span className="text-muted-foreground">{item.label}</span>
-                  <span className="font-medium tabular-nums text-foreground">PHP {item.amount.toLocaleString()}</span>
+                  <span className="font-medium tabular-nums text-foreground">{formatPeso(item.amount)}</span>
                 </div>
               ))}
             </div>
             <div className="flex items-center justify-between border-t border-border py-3">
               <span className="text-base font-semibold text-foreground">Total</span>
               <span className="text-base font-semibold tabular-nums text-emerald-600">
-                PHP {bill.amount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                {formatPeso(bill.amount)}
               </span>
             </div>
           </div>
@@ -158,8 +158,9 @@ export function ReceiptScreen({ billId, onBack, autoConfirmed = false }: Receipt
           </MobileButton>
           <MobileButton
             onClick={() => {
-              downloadPaymentReceipt(bill, tenant)
-              setActionMessage('Receipt downloaded.')
+              void downloadPaymentReceipt(bill, tenant)
+                .then(setActionMessage)
+                .catch(() => setActionMessage('Unable to save receipt.'))
             }}
           >
             <Download className="h-4 w-4" />

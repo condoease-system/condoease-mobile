@@ -42,7 +42,7 @@ export function MaintenanceDetailScreen({ requestId, onBack }: MaintenanceDetail
   const currentStep = sc.step
 
   const details = [
-    { icon: Clock, label: 'Submitted', value: req.submittedDate },
+    { icon: Clock, label: 'Submitted', value: req.submittedDate || '-' },
     { icon: Wrench, label: 'Category', value: req.category },
     ...(req.assignedTo ? [{ icon: User, label: 'Assigned To', value: req.assignedTo }] : []),
   ]
@@ -56,7 +56,7 @@ export function MaintenanceDetailScreen({ requestId, onBack }: MaintenanceDetail
         <div className="flex items-start gap-3 px-1">
           <IconChip icon={Wrench} tone="primary" className="h-12 w-12 rounded-2xl" />
           <div className="min-w-0 flex-1">
-            <h2 className="text-xl font-semibold leading-tight tracking-tight text-foreground">{req.title}</h2>
+            <h2 className="break-words text-xl font-semibold leading-tight tracking-tight text-foreground">{req.title}</h2>
             <StatusPill status={req.status} className="mt-2">
               {sc.label}
             </StatusPill>
@@ -113,7 +113,7 @@ export function MaintenanceDetailScreen({ requestId, onBack }: MaintenanceDetail
         {/* Description */}
         <MobileCard className="p-4">
           <p className="mb-2 text-sm font-semibold text-foreground">Description</p>
-          <p className="text-sm leading-relaxed text-muted-foreground">{req.description}</p>
+          <p className="whitespace-pre-line break-words text-sm leading-relaxed text-muted-foreground">{req.description}</p>
         </MobileCard>
 
         {/* Notes from team */}
@@ -123,7 +123,7 @@ export function MaintenanceDetailScreen({ requestId, onBack }: MaintenanceDetail
               <MessageSquare className="h-4 w-4 text-blue-600" />
               <p className="text-sm font-semibold text-blue-800">Update from Management</p>
             </div>
-            <p className="text-xs leading-relaxed text-blue-800">{req.notes}</p>
+            <p className="whitespace-pre-line break-words text-xs leading-relaxed text-blue-800">{req.notes}</p>
             <p className="mt-2 text-xs font-medium text-blue-500">Updated {req.updatedDate}</p>
           </div>
         )}

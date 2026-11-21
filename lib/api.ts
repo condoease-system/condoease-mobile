@@ -1,6 +1,17 @@
 const API_URL = getApiUrl()
 const TOKEN_STORAGE_KEY = "condoeaseAuthToken"
 const USER_STORAGE_KEY = "condoeaseAuthUser"
+export const SESSION_EXPIRED_EVENT = "condoease:session-expired"
+
+export class ApiError extends Error {
+  status: number
+
+  constructor(message: string, status: number) {
+    super(message)
+    this.name = "ApiError"
+    this.status = status
+  }
+}
 
 function getApiUrl() {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL?.trim().replace(/\/$/, "")
@@ -63,7 +74,13 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}) 
   const data = contentType?.includes("application/json") ? await response.json() : null
 
   if (!response.ok) {
-    throw new Error(data?.message ?? "Request failed")
+    // An expired or revoked token makes every authenticated call fail with 401; drop the session so the app returns to login.
+    if (response.status === 401 && token) {
+      clearAuthSession()
+      window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT))
+    }
+
+    throw new ApiError(data?.message ?? "Request failed", response.status)
   }
 
   return data as T

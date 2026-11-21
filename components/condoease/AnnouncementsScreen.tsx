@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 
 interface AnnouncementsScreenProps {
   onNavigate: (screen: string, params?: Record<string, unknown>) => void
+  onBack?: () => void
 }
 
 const categoryTones: Record<string, Tone> = {
@@ -55,14 +56,14 @@ export function AnnouncementCard({ announcement, important = false, onOpen }: { 
   )
 }
 
-export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
+export function AnnouncementsScreen({ onNavigate, onBack }: AnnouncementsScreenProps) {
   const { announcements, loading, error } = useMobileData()
   const important = announcements.filter(a => a.important)
   const regular = announcements.filter(a => !a.important)
 
   return (
     <Screen>
-      <ScreenHeader title="Announcements" subtitle="Property news and updates" />
+      <ScreenHeader title="Announcements" subtitle="Property news and updates" onBack={onBack} />
 
       <ScreenBody>
         <div className="flex items-center gap-2">

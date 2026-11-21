@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { createRecord, listRecords, type ApiUser } from '@/lib/api'
 
 export type BillStatus = 'paid' | 'unpaid' | 'overdue'
@@ -166,12 +166,19 @@ export function MobileDataProvider({ user, children }: { user: ApiUser | null; c
     }
   }, [bills, lease, user])
 
+  // Bumped on every refresh/logout so a slower, older response (e.g. the previous user's) cannot overwrite newer state.
+  const requestIdRef = useRef(0)
+
   const refresh = useCallback(async () => {
+    const requestId = ++requestIdRef.current
+
     if (!user) {
       setBills([])
       setMaintenanceRequests([])
       setAnnouncements([])
       setLease(null)
+      setError(null)
+      setLoading(false)
       return
     }
 
@@ -185,15 +192,17 @@ export function MobileDataProvider({ user, children }: { user: ApiUser | null; c
         listRecords<AnnouncementRecord>('/announcements', { limit: 100, sort: '-publishedAt' }),
         listRecords<LeaseRecord>('/leases', { limit: 20 }),
       ])
+      if (requestId !== requestIdRef.current) return
 
       setBills(paymentsResult.items.map(mapPayment))
       setMaintenanceRequests(maintenanceResult.items.map(mapMaintenance))
       setAnnouncements(announcementsResult.items.map(mapAnnouncement))
       setLease(leasesResult.items.find(item => item.status === 'Active') ?? leasesResult.items[0] ?? null)
     } catch (dataError) {
+      if (requestId !== requestIdRef.current) return
       setError(dataError instanceof Error ? dataError.message : 'Unable to load mobile data.')
     } finally {
-      setLoading(false)
+      if (requestId === requestIdRef.current) setLoading(false)
     }
   }, [user])
 

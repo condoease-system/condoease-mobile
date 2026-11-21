@@ -4,7 +4,7 @@ import { useRef, useState } from 'react'
 import type { HTMLAttributes, ReactNode } from 'react'
 import Image from 'next/image'
 import type { LucideIcon } from 'lucide-react'
-import { Building2, Calendar, Camera, Edit3, Home, Layers, LogOut, Mail, Phone, Shield, X } from 'lucide-react'
+import { Building2, Camera, Edit3, Home, Layers, LogOut, Mail, MapPin, Phone, Shield, X } from 'lucide-react'
 import { saveStoredUser, updatePassword, updateProfile, type ApiUser } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { useMobileData } from './mobile-data'
@@ -108,16 +108,18 @@ export function ProfileScreen({ user, onUserUpdate, onLogout }: ProfileScreenPro
             </span>
           </button>
           <h2 className="text-xl font-semibold tracking-tight text-foreground">{fullName}</h2>
-          {email && <p className="mt-0.5 text-sm text-muted-foreground">{email}</p>}
+          {email && <p className="mt-0.5 max-w-full break-all text-sm text-muted-foreground">{email}</p>}
           <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
               <Home className="h-3.5 w-3.5" />
-              {tenant.unit}
+              {tenant.unit || 'No unit assigned'}
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
-              <Building2 className="h-3.5 w-3.5" />
-              {tenant.building}
-            </span>
+            {tenant.building && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                <Building2 className="h-3.5 w-3.5" />
+                {tenant.building}
+              </span>
+            )}
           </div>
           {(photoError || photoNotice) && (
             <InlineAlert tone={photoError ? 'danger' : 'success'} className="mt-4 w-full px-3 py-2 text-center text-xs font-semibold">
@@ -130,8 +132,8 @@ export function ProfileScreen({ user, onUserUpdate, onLogout }: ProfileScreenPro
           <SectionTitle title="Unit Information" />
           <ListCard>
             <InfoRow icon={Home} label="Unit" value={tenant.unit} />
-            <InfoRow icon={Layers} label="Floor" value={tenant.floor} />
-            <InfoRow icon={Calendar} label="Address" value={address || tenant.address || 'No address on file'} />
+            <InfoRow icon={Layers} label="Unit Type" value={tenant.floor} />
+            <InfoRow icon={MapPin} label="Address" value={address || tenant.address || 'No address on file'} />
           </ListCard>
         </section>
 
@@ -203,7 +205,11 @@ function InfoRow({ icon, label, value }: { icon: LucideIcon; label: string; valu
       <IconChip icon={icon} tone="primary" />
       <div className="min-w-0 flex-1">
         <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="break-words text-sm font-semibold text-foreground">{value}</p>
+        {value || value === 0 ? (
+          <p className="break-words text-sm font-semibold text-foreground">{value}</p>
+        ) : (
+          <p className="text-sm text-muted-foreground">Not specified</p>
+        )}
       </div>
     </div>
   )
@@ -211,7 +217,7 @@ function InfoRow({ icon, label, value }: { icon: LucideIcon; label: string; valu
 
 function SheetOverlay({ onDismiss, children, className }: { onDismiss?: () => void; children: ReactNode; className?: string }) {
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-foreground/40 backdrop-blur-[2px]">
+    <div className="absolute inset-0 z-50 flex flex-col bg-foreground/40 backdrop-blur-[2px]">
       <div className="flex-1" onClick={onDismiss} />
       <div className={cn('rounded-t-3xl border-t border-border bg-card px-6 pb-6 pt-3', className)}>
         <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
@@ -275,7 +281,7 @@ function EditProfileSheet({
   }
 
   return (
-    <SheetOverlay onDismiss={saving ? undefined : onClose} className="mobile-scroll max-h-[86vh]">
+    <SheetOverlay onDismiss={saving ? undefined : onClose} className="mobile-scroll max-h-[86%]">
       <SheetHeader title="Edit Profile" desc="Update your tenant profile details." onClose={onClose} disabled={saving} />
       <div className="flex flex-col gap-3">
         <SheetInput label="First Name" value={form.firstName} onChange={value => update('firstName', value)} />

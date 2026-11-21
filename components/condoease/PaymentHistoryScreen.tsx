@@ -2,7 +2,7 @@
 
 import { CheckCircle, Receipt, TrendingUp } from 'lucide-react'
 import { useMobileData } from './mobile-data'
-import { EmptyState, IconChip, ListCard, ListRow, MobileCard, Screen, ScreenBody, ScreenHeader } from './mobile-kit'
+import { formatPeso, EmptyState, IconChip, ListCard, ListRow, MobileCard, Screen, ScreenBody, ScreenHeader } from './mobile-kit'
 
 interface PaymentHistoryScreenProps {
   onNavigate: (screen: string, params?: Record<string, unknown>) => void
@@ -22,7 +22,7 @@ export function PaymentHistoryScreen({ onNavigate }: PaymentHistoryScreenProps) 
         <div className="grid grid-cols-2 gap-3">
           <MobileCard className="p-4">
             <IconChip icon={TrendingUp} tone="accent" className="h-8 w-8 rounded-lg [&_svg]:h-4 [&_svg]:w-4" />
-            <p className="mt-3 text-xl font-semibold tracking-tight tabular-nums text-foreground">₱{totalPaid.toLocaleString()}</p>
+            <p className="mt-3 text-xl font-semibold tracking-tight tabular-nums text-foreground">{formatPeso(totalPaid)}</p>
             <p className="mt-0.5 text-xs text-muted-foreground">Total Paid</p>
           </MobileCard>
           <MobileCard className="p-4">
@@ -53,7 +53,7 @@ export function PaymentHistoryScreen({ onNavigate }: PaymentHistoryScreenProps) 
                 chevron={false}
                 trailing={
                   <div className="shrink-0 text-right">
-                    <p className="text-base font-semibold tracking-tight tabular-nums text-foreground">₱{bill.amount.toLocaleString()}</p>
+                    <p className="text-base font-semibold tracking-tight tabular-nums text-foreground">{formatPeso(bill.amount)}</p>
                     <p className="mt-0.5 text-xs font-medium text-muted-foreground">View</p>
                   </div>
                 }

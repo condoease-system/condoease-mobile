@@ -19,7 +19,7 @@ import { AnnouncementDetailScreen } from './AnnouncementDetailScreen'
 import { ProfileScreen } from './ProfileScreen'
 import { NotificationsScreen } from './NotificationsScreen'
 import { BottomNav } from './BottomNav'
-import { clearAuthSession, getCurrentUser, getStoredUser, type ApiUser } from '@/lib/api'
+import { ApiError, SESSION_EXPIRED_EVENT, clearAuthSession, getCurrentUser, getStoredUser, type ApiUser } from '@/lib/api'
 import { MobileDataProvider, useMobileData } from './mobile-data'
 
 type AppScreen =
@@ -52,12 +52,26 @@ export function CondoEaseApp() {
   const [user, setUser] = useState<ApiUser | null>(null)
 
   const current = history[history.length - 1]
+  const initialSearchRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      setUser(null)
+      setIsLoggedIn(false)
+      setHistory([{ screen: 'login' }])
+    }
+
+    window.addEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired)
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired)
+  }, [])
 
   useEffect(() => {
     let cancelled = false
 
     const initialize = async () => {
-      const params = new URLSearchParams(window.location.search)
+      // Keep the original query: it is stripped below, and a re-run effect (Strict Mode) must still see the payment return params.
+      if (initialSearchRef.current === null) initialSearchRef.current = window.location.search
+      const params = new URLSearchParams(initialSearchRef.current)
       const paymentStatus = params.get('paymentStatus')
       const billId = params.get('billId') || ''
       const storedUser = getStoredUser()
@@ -91,8 +105,9 @@ export function CondoEaseApp() {
       try {
         const { user: refreshedUser } = await getCurrentUser()
         if (!cancelled) setUser(refreshedUser)
-      } catch {
-        if (cancelled) return
+      } catch (error) {
+        // Only an auth rejection ends the session; offline/server errors keep the stored user signed in.
+        if (cancelled || !(error instanceof ApiError && error.status === 401)) return
         clearAuthSession()
         setUser(null)
         setIsLoggedIn(false)
@@ -111,7 +126,8 @@ export function CondoEaseApp() {
   }, [])
 
   const goBack = useCallback(() => {
-    setHistory(prev => (prev.length > 1 ? prev.slice(0, -1) : prev))
+    // Tab roots and deep-link entries (e.g. payment return) have no previous entry; fall back to Home instead of doing nothing.
+    setHistory(prev => (prev.length > 1 ? prev.slice(0, -1) : [{ screen: 'home' }]))
   }, [])
 
   const renderScreen = () => {
@@ -158,7 +174,7 @@ export function CondoEaseApp() {
         return <MaintenanceDetailScreen requestId={(params?.requestId as string) ?? ''} onBack={goBack} />
 
       case 'announcements':
-        return <AnnouncementsScreen onNavigate={navigate} />
+        return <AnnouncementsScreen onNavigate={navigate} onBack={history.length > 1 ? goBack : undefined} />
 
       case 'announcement-detail':
         return <AnnouncementDetailScreen announcementId={(params?.announcementId as string) ?? ''} onBack={goBack} />
@@ -170,7 +186,7 @@ export function CondoEaseApp() {
         return <ProfileScreen user={user} onUserUpdate={setUser} onLogout={() => { clearAuthSession(); setUser(null); setIsLoggedIn(false); setHistory([{ screen: 'login' }]) }} />
 
       default:
-        return <HomeScreen onNavigate={navigate} />
+        return <HomeScreen user={user} onNavigate={navigate} />
     }
   }
 
@@ -186,7 +202,8 @@ export function CondoEaseApp() {
       <PullToRefresh>
         <div className="flex h-full flex-col overflow-hidden bg-background">
           {/* Screen area */}
-          <div className="flex-1 overflow-hidden relative">
+          {/* Keyed by stack depth so a screen reached again via a tab remounts instead of keeping stale state (e.g. an open pay sheet). */}
+          <div key={history.length} className="flex-1 overflow-hidden relative">
             {renderScreen()}
           </div>
 

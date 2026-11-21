@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { CalendarDays, Check, CreditCard, Shield, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { apiRequest } from '@/lib/api'
 import { useMobileData } from './mobile-data'
-import { DetailRow, EmptyState, IconChip, InlineAlert, MobileButton, MobileCard, Screen, ScreenBody, ScreenHeader, SectionTitle, type Tone } from './mobile-kit'
+import { formatPeso, DetailRow, EmptyState, IconChip, InlineAlert, MobileButton, MobileCard, Screen, ScreenBody, ScreenHeader, SectionTitle, type Tone } from './mobile-kit'
 
 interface PayBillScreenProps {
   billId?: string
@@ -28,13 +28,15 @@ function getPaymentReturnUrlBase() {
 }
 
 export function PayBillScreen({ billId, onBack }: PayBillScreenProps) {
-  const { bills } = useMobileData()
+  const { bills, loading, error: loadError } = useMobileData()
   const payableBills = useMemo(() => bills.filter(bill => bill.status !== 'paid'), [bills])
   const [selectedBillId, setSelectedBillId] = useState<string | null>(billId ?? null)
   const [selectedMethod, setSelectedMethod] = useState<string | null>('xendit')
   const [showConfirm, setShowConfirm] = useState(false)
   const [processing, setProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Synchronous guard: a fast double tap can fire twice before the disabled state renders, creating two checkout calls.
+  const submittingRef = useRef(false)
 
   useEffect(() => {
     if (!payableBills.length) return
@@ -52,7 +54,8 @@ export function PayBillScreen({ billId, onBack }: PayBillScreenProps) {
     return (
       <Screen className="items-center justify-center px-6">
         <EmptyState
-          title="No payable bills found"
+          title={loading ? 'Loading bills...' : 'No payable bills found'}
+          description={!loading && loadError ? loadError : undefined}
           action={
             <MobileButton onClick={onBack} className="w-auto">
               Back
@@ -70,6 +73,8 @@ export function PayBillScreen({ billId, onBack }: PayBillScreenProps) {
   }
 
   const handleConfirmPay = async () => {
+    if (submittingRef.current) return
+    submittingRef.current = true
     setProcessing(true)
     setError(null)
 
@@ -89,6 +94,7 @@ export function PayBillScreen({ billId, onBack }: PayBillScreenProps) {
       window.location.assign(data.redirectUrl)
     } catch (checkoutError) {
       setError(checkoutError instanceof Error ? checkoutError.message : 'Unable to start Xendit Checkout.')
+      submittingRef.current = false
       setProcessing(false)
     }
   }
@@ -98,53 +104,52 @@ export function PayBillScreen({ billId, onBack }: PayBillScreenProps) {
     setError(null)
   }
 
-  if (showConfirm) {
-    const method = METHODS.find(m => m.id === selectedMethod)!
-    return (
-      <div className="flex h-full flex-col bg-foreground/40">
-        <div className="flex-1" onClick={() => !processing && setShowConfirm(false)} />
-        <div className="flex flex-col gap-5 rounded-t-3xl border-t border-border bg-card p-6 pb-8">
-          <div className="mx-auto mb-2 h-1 w-12 rounded-full bg-border" />
-          <h2 className="text-center text-lg font-semibold tracking-tight text-foreground">Confirm Payment</h2>
+  const confirmMethod = METHODS.find(m => m.id === selectedMethod)
+  // Rendered over the pay screen (absolute, contained in the app frame) rather than replacing it.
+  const confirmSheet = showConfirm && confirmMethod ? (
+    <div className="absolute inset-0 z-30 flex flex-col bg-foreground/40 backdrop-blur-[2px]">
+      <div className="flex-1" onClick={() => !processing && setShowConfirm(false)} />
+      <div className="flex flex-col gap-5 rounded-t-3xl border-t border-border bg-card p-6 pb-8">
+        <div className="mx-auto mb-2 h-1 w-12 rounded-full bg-border" />
+        <h2 className="text-center text-lg font-semibold tracking-tight text-foreground">Confirm Payment</h2>
 
-          <div className="rounded-2xl border border-border bg-background px-4 py-1">
-            <DetailRow label="Bill Period" value={displayBill.month} />
-            <DetailRow label="Payment Method" value={method.name} />
-            <div className="flex items-center justify-between border-t border-border py-3">
-              <span className="text-sm font-semibold text-foreground">Total Amount</span>
-              <span className="text-lg font-semibold tracking-tight tabular-nums text-foreground">
-                PHP {displayBill.amount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
-              </span>
-            </div>
-          </div>
-
-          {error && (
-            <InlineAlert tone="danger" className="text-xs">
-              {error}
-            </InlineAlert>
-          )}
-
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Shield className="h-3.5 w-3.5" />
-            <span>Payment will continue on Xendit Checkout.</span>
-          </div>
-
-          <div className="space-y-2">
-            <MobileButton onClick={handleConfirmPay} disabled={processing} className="tabular-nums">
-              {processing ? (
-                <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-              ) : (
-                <>Continue to Xendit - PHP {displayBill.amount.toLocaleString()}</>
-              )}
-            </MobileButton>
-            <MobileButton variant="ghost" onClick={() => setShowConfirm(false)} disabled={processing} className="text-muted-foreground">
-              Cancel
-            </MobileButton>
+        <div className="rounded-2xl border border-border bg-background px-4 py-1">
+          <DetailRow label="Bill Period" value={displayBill.month} />
+          <DetailRow label="Payment Method" value={confirmMethod.name} />
+          <div className="flex items-center justify-between border-t border-border py-3">
+            <span className="text-sm font-semibold text-foreground">Total Amount</span>
+            <span className="text-lg font-semibold tracking-tight tabular-nums text-foreground">
+              {formatPeso(displayBill.amount)}
+            </span>
           </div>
         </div>
+
+        {error && (
+          <InlineAlert tone="danger" className="text-xs">
+            {error}
+          </InlineAlert>
+        )}
+
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Shield className="h-3.5 w-3.5" />
+          <span>Payment will continue on Xendit Checkout.</span>
+        </div>
+
+        <div className="space-y-2">
+          <MobileButton onClick={handleConfirmPay} disabled={processing} className="tabular-nums">
+            {processing ? (
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+            ) : (
+              <>Continue to Xendit - {formatPeso(displayBill.amount)}</>
+            )}
+          </MobileButton>
+          <MobileButton variant="ghost" onClick={() => setShowConfirm(false)} disabled={processing} className="text-muted-foreground">
+            Cancel
+          </MobileButton>
+        </div>
       </div>
-    )
-  }
+    </div>
+  ) : null
 
   return (
     <Screen>
@@ -154,7 +159,7 @@ export function PayBillScreen({ billId, onBack }: PayBillScreenProps) {
         <MobileCard className="p-5">
           <p className="text-sm text-muted-foreground">Amount Due</p>
           <p className="mt-1 text-3xl font-semibold tracking-tight tabular-nums text-foreground">
-            PHP {displayBill.amount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+            {formatPeso(displayBill.amount)}
           </p>
         </MobileCard>
 
@@ -185,7 +190,7 @@ export function PayBillScreen({ billId, onBack }: PayBillScreenProps) {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold tabular-nums text-foreground">PHP {bill.amount.toLocaleString()}</p>
+                    <p className="text-sm font-semibold tabular-nums text-foreground">{formatPeso(bill.amount)}</p>
                     {selected && (
                       <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
                         <Check className="h-3 w-3" />
@@ -238,10 +243,11 @@ export function PayBillScreen({ billId, onBack }: PayBillScreenProps) {
 
         <MobileButton onClick={handlePay} disabled={!selectedMethod} className="tabular-nums">
           {selectedMethod
-            ? `Pay PHP ${displayBill.amount.toLocaleString()} via Xendit`
+            ? `Pay ${formatPeso(displayBill.amount)} via Xendit`
             : 'Select a Payment Method'}
         </MobileButton>
       </ScreenBody>
+      {confirmSheet}
     </Screen>
   )
 }

@@ -30,6 +30,7 @@ const screenToTab: Record<string, string> = {
   'maintenance-detail': 'maintenance',
   announcements: 'home',
   'announcement-detail': 'home',
+  notifications: 'home',
   profile: 'profile',
 }
 
@@ -37,7 +38,7 @@ export function BottomNav({ active, onNavigate }: BottomNavProps) {
   const activeTab = screenToTab[active] ?? active
 
   return (
-    <nav className="pb-safe flex shrink-0 items-center justify-around border-t border-border bg-background/90 px-2 pb-4 pt-2 backdrop-blur-md">
+    <nav className="flex shrink-0 items-center justify-around border-t border-border bg-background/90 px-2 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-md">
       {TABS.map(tab => {
         const isActive = activeTab === tab.id
         return (

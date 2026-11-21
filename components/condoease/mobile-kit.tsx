@@ -39,6 +39,11 @@ export function getStatusTone(status: string): Tone {
   return statusTones[status.trim().toLowerCase()] ?? 'neutral'
 }
 
+/* Peso amounts always render as ₱1,234.50 (en-PH, exactly two decimals). */
+export function formatPeso(amount: number) {
+  return `₱${amount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}
+
 export function formatStatus(status: string) {
   return status.replace(/-/g, ' ').replace(/\b\w/g, char => char.toUpperCase())
 }

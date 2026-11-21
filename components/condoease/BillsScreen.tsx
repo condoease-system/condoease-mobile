@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { FileText } from 'lucide-react'
 import { useMobileData, type BillStatus } from './mobile-data'
-import { EmptyState, FilterChips, InlineAlert, ListCard, ListRow, Screen, ScreenBody, ScreenHeader, StatusPill, getStatusTone } from './mobile-kit'
+import { formatPeso, EmptyState, FilterChips, InlineAlert, ListCard, ListRow, Screen, ScreenBody, ScreenHeader, StatusPill, getStatusTone } from './mobile-kit'
 
 interface BillsScreenProps {
   onNavigate: (screen: string, params?: Record<string, unknown>) => void
@@ -58,12 +58,12 @@ export function BillsScreen({ onNavigate }: BillsScreenProps) {
                 icon={FileText}
                 tone={getStatusTone(bill.status)}
                 title={bill.month}
-                subtitle={bill.status === 'paid' ? `Paid on ${bill.paidDate}` : `Due ${bill.dueDate}`}
+                subtitle={bill.status === 'paid' ? (bill.paidDate ? `Paid on ${bill.paidDate}` : 'Paid') : `Due ${bill.dueDate}`}
                 onClick={() => onNavigate('bill-detail', { billId: bill.id })}
                 trailing={
                   <div className="flex shrink-0 flex-col items-end gap-1">
                     <p className="text-base font-semibold tracking-tight tabular-nums text-foreground">
-                      ₱{bill.amount.toLocaleString()}
+                      {formatPeso(bill.amount)}
                     </p>
                     <StatusPill status={bill.status} />
                   </div>
@@ -73,8 +73,8 @@ export function BillsScreen({ onNavigate }: BillsScreenProps) {
           </ListCard>
         )}
 
-        {filtered.length === 0 && (
-          <EmptyState icon={FileText} title={`No ${filter} bills found`} />
+        {!loading && filtered.length === 0 && (
+          <EmptyState icon={FileText} title={filter === 'all' ? 'No bills found' : `No ${filter} bills found`} />
         )}
       </ScreenBody>
     </Screen>

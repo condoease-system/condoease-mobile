@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { CheckCircle, Clock, Download, Home, Share2 } from 'lucide-react'
 import { apiRequest } from '@/lib/api'
 import { useMobileData } from './mobile-data'
-import { DetailRow, EmptyState, MobileButton, MobileCard, Screen, ScreenBody } from './mobile-kit'
+import { formatPeso, DetailRow, EmptyState, MobileButton, MobileCard, Screen, ScreenBody } from './mobile-kit'
 import { downloadPaymentReceipt, fallbackReference, sharePaymentReceipt } from './payment-receipt'
 
 interface PaymentSuccessScreenProps {
@@ -120,7 +120,7 @@ export function PaymentSuccessScreen({ billId, method = 'xendit', onNavigate }: 
             Your payment has been processed and confirmed.
           </p>
           <p className="mt-4 text-4xl font-semibold tracking-tight tabular-nums text-foreground">
-            PHP {bill.amount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+            {formatPeso(bill.amount)}
           </p>
         </div>
 
@@ -140,8 +140,8 @@ export function PaymentSuccessScreen({ billId, method = 'xendit', onNavigate }: 
           <div className="px-5 py-2">
             <div className="divide-y divide-border">
               {[
-                { label: 'Tenant', value: tenant.name },
-                { label: 'Unit', value: [tenant.unit, tenant.building].filter(Boolean).join(' - ') },
+                { label: 'Tenant', value: tenant.name || '-' },
+                { label: 'Unit', value: [tenant.unit, tenant.building].filter(Boolean).join(' - ') || '-' },
                 { label: 'Bill Period', value: bill.month },
                 { label: 'Payment Method', value: methodLabels[method] ?? method },
                 { label: 'Payment Hash', value: verificationHash || '-' },
@@ -154,7 +154,7 @@ export function PaymentSuccessScreen({ billId, method = 'xendit', onNavigate }: 
             <div className="flex items-center justify-between border-t border-border py-3">
               <span className="text-sm font-semibold text-foreground">Amount Paid</span>
               <span className="text-base font-semibold tabular-nums text-emerald-600">
-                PHP {bill.amount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                {formatPeso(bill.amount)}
               </span>
             </div>
           </div>
@@ -194,8 +194,9 @@ export function PaymentSuccessScreen({ billId, method = 'xendit', onNavigate }: 
             <MobileButton
               variant="outline"
               onClick={() => {
-                downloadPaymentReceipt(bill, tenant)
-                setActionMessage('Receipt downloaded.')
+                void downloadPaymentReceipt(bill, tenant)
+                  .then(setActionMessage)
+                  .catch(() => setActionMessage('Unable to save receipt.'))
               }}
             >
               <Download className="h-4 w-4" />
