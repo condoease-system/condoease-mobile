@@ -1,6 +1,7 @@
 'use client'
 
 import { Home, FileText, CreditCard, Wrench, User } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface BottomNavProps {
   active: string
@@ -36,47 +37,32 @@ export function BottomNav({ active, onNavigate }: BottomNavProps) {
   const activeTab = screenToTab[active] ?? active
 
   return (
-    <div
-      className="flex items-center justify-around px-2 pb-safe"
-      style={{
-        backgroundColor: 'white',
-        borderTop: '1px solid #F1F5F9',
-        paddingTop: 10,
-        paddingBottom: 16,
-        boxShadow: '0 -4px 20px rgba(36,54,96,0.06)',
-      }}
-    >
+    <nav className="pb-safe flex shrink-0 items-center justify-around border-t border-border bg-background/90 px-2 pb-4 pt-2 backdrop-blur-md">
       {TABS.map(tab => {
         const isActive = activeTab === tab.id
         return (
           <button
             key={tab.id}
+            type="button"
             onClick={() => onNavigate(tab.id)}
-            className="flex flex-col items-center gap-1 px-3 py-1 rounded-xl transition-all active:scale-90"
-            style={{ minWidth: 56 }}
+            aria-current={isActive ? 'page' : undefined}
+            className={cn(
+              'flex min-w-14 flex-col items-center gap-0.5 rounded-xl px-2 py-1 transition-all active:scale-95',
+              isActive ? 'text-primary' : 'text-muted-foreground',
+            )}
           >
-            {/* Icon with indicator pill */}
-            <div className="relative">
-              <div
-                className="w-10 h-10 rounded-2xl flex items-center justify-center transition-all"
-                style={{ backgroundColor: isActive ? '#EEF2FF' : 'transparent' }}
-              >
-                <tab.icon
-                  size={22}
-                  color={isActive ? '#243660' : '#9AABC4'}
-                  strokeWidth={isActive ? 2.5 : 1.8}
-                />
-              </div>
-            </div>
             <span
-              className="text-xs font-semibold"
-              style={{ color: isActive ? '#243660' : '#9AABC4' }}
+              className={cn(
+                'flex h-8 w-14 items-center justify-center rounded-full transition-colors',
+                isActive ? 'bg-primary/10' : 'bg-transparent',
+              )}
             >
-              {tab.label}
+              <tab.icon className="h-[22px] w-[22px]" strokeWidth={isActive ? 2.25 : 1.8} />
             </span>
+            <span className={cn('text-[11px]', isActive ? 'font-semibold' : 'font-medium')}>{tab.label}</span>
           </button>
         )
       })}
-    </div>
+    </nav>
   )
 }

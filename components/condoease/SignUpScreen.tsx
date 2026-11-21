@@ -1,9 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { ArrowLeft, ArrowRight, CheckCircle, Eye, EyeOff, Mail, ShieldCheck } from 'lucide-react'
+import type { HTMLAttributes, ReactNode } from 'react'
+import { ArrowLeft, ArrowRight, CheckCircle, ChevronDown, Eye, EyeOff, Mail, ShieldCheck } from 'lucide-react'
 import { registerAccount, sendOtp, verifyOtp } from '@/lib/api'
+import { cn } from '@/lib/utils'
 import { Logo } from './Logo'
+import { IconButton, InlineAlert, MobileButton } from './mobile-kit'
 
 interface SignUpScreenProps {
   onBack: () => void
@@ -13,6 +16,12 @@ type SignupStep = 'email' | 'otp' | 'details' | 'submitted'
 
 const idTypes = ['National ID', 'Driver License', 'Passport', 'SSS', 'UMID', 'Voter ID']
 const workSchoolTypes = ['Work', 'School']
+
+const inputWrapClass =
+  'flex h-12 items-center gap-3 rounded-xl border border-input bg-card px-4 transition-[color,box-shadow] focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/20'
+const inputClass = 'h-full min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/70'
+const labelClass = 'text-sm font-medium text-foreground'
+const iconClass = 'h-[18px] w-[18px] shrink-0 text-muted-foreground'
 
 export function SignUpScreen({ onBack }: SignUpScreenProps) {
   const [step, setStep] = useState<SignupStep>('email')
@@ -158,53 +167,63 @@ export function SignUpScreen({ onBack }: SignUpScreenProps) {
 
   if (step === 'submitted') {
     return (
-      <div className="flex flex-col h-full items-center justify-center px-8 text-center" style={{ background: '#F4F6FA' }}>
-        <div className="w-20 h-20 rounded-full flex items-center justify-center mb-5" style={{ backgroundColor: '#F0FDF4' }}>
-          <CheckCircle size={44} color="#22C55E" />
+      <div className="flex h-full flex-col items-center justify-center bg-background px-6 text-center">
+        <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-50 ring-8 ring-emerald-50/50">
+          <CheckCircle className="h-10 w-10 text-emerald-600" />
         </div>
-        <h1 className="text-xl font-bold" style={{ color: '#1A2847' }}>Registration Submitted</h1>
-        <p className="text-sm mt-2" style={{ color: '#5A6A8A' }}>
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">Registration Submitted</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
           Your tenant account is pending property manager approval on the web portal. You can sign in once approved.
         </p>
-        <button onClick={onBack} className="mt-8 w-full py-4 rounded-2xl font-bold text-white" style={{ backgroundColor: '#243660' }}>
+        <MobileButton onClick={onBack} className="mt-8">
           Back to Sign In
-        </button>
+        </MobileButton>
       </div>
     )
   }
 
-  return (
-    <div className="flex flex-col h-full" style={{ background: '#F4F6FA' }}>
-      <div
-        className="px-6 pt-12 pb-6"
-        style={{ background: 'linear-gradient(160deg, #1a2847 0%, #243660 100%)', borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }}
-      >
-        <button onClick={onBack} className="flex items-center gap-2 mb-5">
-          <ArrowLeft size={18} color="rgba(255,255,255,0.7)" />
-          <span className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.7)' }}>Sign In</span>
-        </button>
-        <Logo size="sm" variant="full" className="mb-3 [&_span]:!text-white [&_span_span]:!text-[#FF8A1C]" />
-        <h1 className="text-xl font-bold text-white">Tenant Sign Up</h1>
-        <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.55)' }}>
-          {step === 'email' ? 'Verify your email to begin' : step === 'otp' ? 'Enter the code sent to your email' : 'Complete your tenant profile'}
-        </p>
-      </div>
+  const stepIndex = step === 'email' ? 0 : step === 'otp' ? 1 : 2
 
-      <div className="flex-1 mobile-scroll px-6 py-6 flex flex-col gap-4">
+  return (
+    <div className="flex h-full flex-col bg-background">
+      <header className="shrink-0 border-b border-border bg-background/85 px-4 pb-4 pt-12 backdrop-blur-md">
+        <button
+          type="button"
+          onClick={onBack}
+          className="-ml-1 flex h-10 items-center gap-1.5 rounded-full pl-1.5 pr-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted"
+        >
+          <ArrowLeft className="h-[18px] w-[18px]" />
+          Sign In
+        </button>
+        <div className="mt-3 px-2">
+          <Logo size="sm" variant="full" className="mb-4" />
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Tenant Sign Up</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {step === 'email' ? 'Verify your email to begin' : step === 'otp' ? 'Enter the code sent to your email' : 'Complete your tenant profile'}
+          </p>
+          <div className="mt-4 flex gap-1.5" aria-hidden="true">
+            {[0, 1, 2].map(index => (
+              <span key={index} className={cn('h-1 flex-1 rounded-full', index <= stepIndex ? 'bg-primary' : 'bg-border')} />
+            ))}
+          </div>
+        </div>
+      </header>
+
+      <div className="mobile-scroll flex flex-1 flex-col gap-4 px-6 py-6">
         {step === 'email' && (
           <>
-            <Field label="Email Address" value={form.email} onChange={value => update('email', value)} placeholder="your@email.com" type="email" icon={<Mail size={18} color="#9AABC4" />} />
+            <Field label="Email Address" value={form.email} onChange={value => update('email', value)} placeholder="your@email.com" type="email" icon={<Mail className={iconClass} />} />
             <PrimaryButton loading={loading} label="Send OTP" onClick={handleSendOtp} />
           </>
         )}
 
         {step === 'otp' && (
           <>
-            <Field label="OTP Code" value={form.otp} onChange={value => update('otp', value)} placeholder="6-digit code" inputMode="numeric" icon={<ShieldCheck size={18} color="#9AABC4" />} />
+            <Field label="OTP Code" value={form.otp} onChange={value => update('otp', value)} placeholder="6-digit code" inputMode="numeric" icon={<ShieldCheck className={iconClass} />} />
             <PrimaryButton loading={loading} label="Verify OTP" onClick={handleVerifyOtp} />
-            <button onClick={handleSendOtp} disabled={loading} className="py-2 text-sm font-semibold" style={{ color: '#FF8A1C' }}>
+            <MobileButton variant="ghost" onClick={handleSendOtp} disabled={loading} className="h-10">
               Resend OTP
-            </button>
+            </MobileButton>
           </>
         )}
 
@@ -230,11 +249,7 @@ export function SignUpScreen({ onBack }: SignUpScreenProps) {
           </>
         )}
 
-        {error && (
-          <div className="rounded-xl p-3 text-xs font-medium" style={{ background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA' }}>
-            {error}
-          </div>
-        )}
+        {error && <InlineAlert className="text-xs">{error}</InlineAlert>}
       </div>
     </div>
   )
@@ -254,25 +269,24 @@ function Field({
   onChange: (value: string) => void
   placeholder: string
   type?: string
-  inputMode?: React.HTMLAttributes<HTMLInputElement>['inputMode']
-  icon?: React.ReactNode
+  inputMode?: HTMLAttributes<HTMLInputElement>['inputMode']
+  icon?: ReactNode
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-semibold" style={{ color: '#1A2847' }}>{label}</label>
-      <div className="flex items-center rounded-xl px-4 py-3.5 gap-3" style={{ background: '#fff', border: '1.5px solid #E2E8F0' }}>
+    <label className="flex flex-col gap-1.5">
+      <span className={labelClass}>{label}</span>
+      <div className={inputWrapClass}>
         {icon}
         <input
           type={type}
           value={value}
           onChange={event => onChange(event.target.value)}
-          className="flex-1 bg-transparent text-sm outline-none"
-          style={{ color: '#1A2847' }}
+          className={inputClass}
           placeholder={placeholder}
           inputMode={inputMode}
         />
       </div>
-    </div>
+    </label>
   )
 }
 
@@ -290,22 +304,21 @@ function PasswordField({
   onToggle: () => void
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-semibold" style={{ color: '#1A2847' }}>{label}</label>
-      <div className="flex items-center rounded-xl px-4 py-3.5 gap-3" style={{ background: '#fff', border: '1.5px solid #E2E8F0' }}>
+    <label className="flex flex-col gap-1.5">
+      <span className={labelClass}>{label}</span>
+      <div className={inputWrapClass}>
         <input
           type={show ? 'text' : 'password'}
           value={value}
           onChange={event => onChange(event.target.value)}
-          className="flex-1 bg-transparent text-sm outline-none"
-          style={{ color: '#1A2847' }}
+          className={inputClass}
           placeholder="At least 8 characters"
         />
-        <button type="button" onClick={onToggle} className="p-1">
-          {show ? <EyeOff size={18} color="#9AABC4" /> : <Eye size={18} color="#9AABC4" />}
-        </button>
+        <IconButton onClick={onToggle} aria-label={show ? 'Hide password' : 'Show password'} className="-mr-3 text-muted-foreground">
+          {show ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
+        </IconButton>
       </div>
-    </div>
+    </label>
   )
 }
 
@@ -321,39 +334,39 @@ function SelectField({
   onChange: (value: string) => void
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-semibold" style={{ color: '#1A2847' }}>{label}</label>
-      <select
-        value={value}
-        onChange={event => onChange(event.target.value)}
-        className="bg-white rounded-xl px-4 py-3.5 text-sm outline-none"
-        style={{ color: value ? '#1A2847' : '#9AABC4', border: '1.5px solid #E2E8F0' }}
-      >
-        <option value="">Select {label.toLowerCase()}</option>
-        {options.map(option => (
-          <option key={option} value={option}>{option}</option>
-        ))}
-      </select>
-    </div>
+    <label className="flex flex-col gap-1.5">
+      <span className={labelClass}>{label}</span>
+      <div className="relative">
+        <select
+          value={value}
+          onChange={event => onChange(event.target.value)}
+          className={cn(
+            'h-12 w-full appearance-none rounded-xl border border-input bg-card pl-4 pr-10 text-sm outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/20',
+            value ? 'text-foreground' : 'text-muted-foreground/70',
+          )}
+        >
+          <option value="">Select {label.toLowerCase()}</option>
+          {options.map(option => (
+            <option key={option} value={option}>{option}</option>
+          ))}
+        </select>
+        <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      </div>
+    </label>
   )
 }
 
 function PrimaryButton({ loading, label, onClick }: { loading: boolean; label: string; onClick: () => void }) {
   return (
-    <button
-      onClick={onClick}
-      disabled={loading}
-      className="flex items-center justify-center gap-2 rounded-xl py-4 font-bold text-white text-base transition-opacity active:opacity-80"
-      style={{ backgroundColor: '#243660' }}
-    >
+    <MobileButton onClick={onClick} disabled={loading}>
       {loading ? (
-        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+        <span className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
       ) : (
         <>
           {label}
-          <ArrowRight size={18} />
+          <ArrowRight className="h-[18px] w-[18px]" />
         </>
       )}
-    </button>
+    </MobileButton>
   )
 }

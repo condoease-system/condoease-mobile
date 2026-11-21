@@ -17,13 +17,8 @@ export function Logo({ size = 'md', variant = 'full', className = '' }: LogoProp
   return (
     <div className={`flex items-center ${s.gap} ${className}`}>
       <div
-        className="rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm"
-        style={{
-          width: s.icon,
-          height: s.icon,
-          backgroundColor: '#243B6B',
-          color: '#FFFFFF',
-        }}
+        className="flex shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground"
+        style={{ width: s.icon, height: s.icon }}
       >
         <svg
           width={s.icon * 0.72}
@@ -55,16 +50,13 @@ export function Logo({ size = 'md', variant = 'full', className = '' }: LogoProp
             opacity="0.68"
           />
           <path d="M17.5 32v-5.5h5V32" fill="currentColor" />
-          <path d="M29.25 5.5h4.25v4.25" stroke="#FF8A1C" strokeWidth="2.4" strokeLinecap="round" />
+          <path d="M29.25 5.5h4.25v4.25" stroke="var(--accent)" strokeWidth="2.4" strokeLinecap="round" />
         </svg>
       </div>
 
       {variant === 'full' && (
-        <span
-          className={`${s.text} font-bold tracking-tight`}
-          style={{ color: '#243660', fontFamily: 'Inter, sans-serif' }}
-        >
-          Condo<span style={{ color: '#FF8A1C' }}>Ease</span>
+        <span className={`${s.text} font-bold tracking-tight text-primary`}>
+          Condo<span className="text-accent">Ease</span>
         </span>
       )}
     </div>

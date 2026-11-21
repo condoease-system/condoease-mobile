@@ -1,8 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { AlertCircle, AlertTriangle, Bell, ChevronLeft, ChevronRight, CreditCard, Megaphone, Wrench, type LucideIcon } from 'lucide-react'
+import { AlertCircle, AlertTriangle, Bell, CreditCard, Megaphone, Wrench, type LucideIcon } from 'lucide-react'
 import { useMobileData } from './mobile-data'
+import { EmptyState, IconChip, InlineAlert, Screen, ScreenBody, ScreenHeader, toneStyles, type Tone } from './mobile-kit'
+import { AnnouncementCard } from './AnnouncementsScreen'
+import { cn } from '@/lib/utils'
 
 interface NotificationsScreenProps {
   initialTab?: 'notifications' | 'announcements'
@@ -20,19 +23,11 @@ type AppNotification = {
   action?: () => void
 }
 
-const toneStyles = {
-  urgent: { bg: '#FFF1F0', border: '#FECACA', iconBg: '#FEE2E2', color: '#EF4444' },
-  warning: { bg: '#FFF8F0', border: '#FED7AA', iconBg: '#FFF3E0', color: '#FF8A1C' },
-  info: { bg: '#EEF2FF', border: '#C7D2FE', iconBg: '#E0E7FF', color: '#243660' },
-  success: { bg: '#F0FDF4', border: '#BBF7D0', iconBg: '#DCFCE7', color: '#22C55E' },
-}
-
-const categoryColors: Record<string, { bg: string; text: string }> = {
-  Utilities: { bg: '#EFF6FF', text: '#3B82F6' },
-  Billing: { bg: '#FFF3E0', text: '#FF8A1C' },
-  Amenities: { bg: '#F0FDF4', text: '#22C55E' },
-  Safety: { bg: '#FFF1F0', text: '#EF4444' },
-  General: { bg: '#EEF2FF', text: '#243660' },
+const notificationTones: Record<AppNotification['tone'], Tone> = {
+  urgent: 'danger',
+  warning: 'warning',
+  info: 'primary',
+  success: 'success',
 }
 
 export function NotificationsScreen({ initialTab = 'notifications', onBack, onNavigate }: NotificationsScreenProps) {
@@ -84,28 +79,16 @@ export function NotificationsScreen({ initialTab = 'notifications', onBack, onNa
   ]
 
   return (
-    <div className="flex h-full flex-col" style={{ background: '#F4F6FA' }}>
-      <div
-        className="px-5 pb-6 pt-12"
-        style={{ background: 'linear-gradient(150deg, #1a2847 0%, #243660 100%)', borderBottomLeftRadius: 28, borderBottomRightRadius: 28 }}
-      >
-        <button onClick={onBack} className="mb-4 flex items-center gap-2">
-          <ChevronLeft size={20} color="rgba(255,255,255,0.7)" />
-          <span className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.7)' }}>Back</span>
-        </button>
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-white">Updates</h1>
-            <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>Alerts and property news</p>
-          </div>
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl" style={{ background: 'rgba(255,255,255,0.15)' }}>
-            {activeTab === 'notifications' ? <Bell size={21} color="white" /> : <Megaphone size={21} color="white" />}
-          </div>
-        </div>
-      </div>
+    <Screen>
+      <ScreenHeader
+        title="Updates"
+        subtitle="Alerts and property news"
+        onBack={onBack}
+        actions={<IconChip icon={activeTab === 'notifications' ? Bell : Megaphone} tone="primary" />}
+      />
 
-      <div className="mobile-scroll flex-1 px-5 py-5">
-        <div className="mb-5 grid grid-cols-2 rounded-2xl p-1 shadow-sm" style={{ backgroundColor: '#E9EEF7' }}>
+      <ScreenBody>
+        <div className="grid grid-cols-2 rounded-xl bg-muted p-1">
           {[
             { key: 'notifications' as const, label: 'Notifications', count: notifications.length },
             { key: 'announcements' as const, label: 'Announcements', count: announcements.length },
@@ -114,48 +97,44 @@ export function NotificationsScreen({ initialTab = 'notifications', onBack, onNa
             return (
               <button
                 key={tab.key}
+                type="button"
                 onClick={() => setActiveTab(tab.key)}
-                className="min-h-11 rounded-xl px-2 text-xs font-bold transition-colors"
-                style={{
-                  backgroundColor: selected ? '#FFFFFF' : 'transparent',
-                  color: selected ? '#1A2847' : '#5A6A8A',
-                  boxShadow: selected ? '0 6px 16px rgba(26,40,71,0.08)' : 'none',
-                }}
+                className={cn(
+                  'min-h-10 rounded-lg px-2 text-xs font-semibold transition-colors',
+                  selected ? 'bg-card text-foreground shadow-xs' : 'text-muted-foreground',
+                )}
               >
                 {tab.label}
-                <span className="ml-1" style={{ color: selected ? '#FF8A1C' : '#9AABC4' }}>{tab.count}</span>
+                <span className={cn('ml-1', selected ? 'text-accent' : 'text-muted-foreground/70')}>{tab.count}</span>
               </button>
             )
           })}
         </div>
 
         {(loading || error) && (
-          <div className="mb-4 rounded-2xl p-4" style={{ background: error ? '#FEF2F2' : '#EEF2FF', border: `1px solid ${error ? '#FECACA' : '#C7D2FE'}` }}>
-            <p className="text-xs font-semibold" style={{ color: error ? '#DC2626' : '#243660' }}>{error || 'Loading updates...'}</p>
-          </div>
+          <InlineAlert tone={error ? 'danger' : 'primary'} className="text-xs font-semibold">
+            {error || 'Loading updates...'}
+          </InlineAlert>
         )}
 
         {activeTab === 'notifications' && notifications.length > 0 ? (
           <div className="flex flex-col gap-3">
             {notifications.map(notification => {
-              const Icon = notification.icon
-              const style = toneStyles[notification.tone]
+              const tone = notificationTones[notification.tone]
 
               return (
                 <button
                   key={notification.id}
+                  type="button"
                   onClick={notification.action}
-                  className="rounded-2xl p-4 text-left shadow-sm active:scale-[0.98] transition-transform"
-                  style={{ background: style.bg, border: `1px solid ${style.border}` }}
+                  className="w-full rounded-2xl border border-border bg-card p-4 text-left transition-colors active:bg-muted/60"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: style.iconBg }}>
-                      <Icon size={18} color={style.color} />
-                    </div>
+                    <IconChip icon={notification.icon} tone={tone} />
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-bold" style={{ color: '#1A2847' }}>{notification.title}</p>
-                      <p className="mt-1 text-xs leading-relaxed" style={{ color: '#5A6A8A' }}>{notification.message}</p>
-                      <p className="mt-2 text-xs font-semibold" style={{ color: style.color }}>{notification.time}</p>
+                      <p className="text-sm font-semibold text-foreground">{notification.title}</p>
+                      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{notification.message}</p>
+                      <p className={cn('mt-2 text-xs font-semibold', toneStyles[tone].text)}>{notification.time}</p>
                     </div>
                   </div>
                 </button>
@@ -163,20 +142,14 @@ export function NotificationsScreen({ initialTab = 'notifications', onBack, onNa
             })}
           </div>
         ) : activeTab === 'notifications' ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl" style={{ backgroundColor: '#EEF2FF' }}>
-              <Bell size={28} color="#243660" />
-            </div>
-            <p className="mt-4 text-sm font-bold" style={{ color: '#1A2847' }}>No notifications</p>
-            <p className="mt-1 text-xs" style={{ color: '#9AABC4' }}>You are all caught up.</p>
-          </div>
+          <EmptyState icon={Bell} title="No notifications" description="You are all caught up." className="py-20" />
         ) : announcements.length > 0 ? (
           <div className="flex flex-col gap-5">
             {importantAnnouncements.length > 0 && (
-              <div>
-                <div className="mb-3 flex items-center gap-2">
-                  <AlertCircle size={16} color="#EF4444" />
-                  <p className="text-sm font-bold" style={{ color: '#1A2847' }}>Important Notices</p>
+              <section>
+                <div className="mb-2.5 flex items-center gap-2 px-1">
+                  <AlertCircle className="h-4 w-4 text-rose-600" />
+                  <h2 className="text-sm font-semibold text-foreground">Important Notices</h2>
                 </div>
                 <div className="flex flex-col gap-3">
                   {importantAnnouncements.map(announcement => (
@@ -188,12 +161,12 @@ export function NotificationsScreen({ initialTab = 'notifications', onBack, onNa
                     />
                   ))}
                 </div>
-              </div>
+              </section>
             )}
 
             {regularAnnouncements.length > 0 && (
-              <div>
-                <p className="mb-3 text-sm font-bold" style={{ color: '#1A2847' }}>All Announcements</p>
+              <section>
+                <h2 className="mb-2.5 px-1 text-sm font-semibold text-foreground">All Announcements</h2>
                 <div className="flex flex-col gap-3">
                   {regularAnnouncements.map(announcement => (
                     <AnnouncementCard
@@ -203,62 +176,13 @@ export function NotificationsScreen({ initialTab = 'notifications', onBack, onNa
                     />
                   ))}
                 </div>
-              </div>
+              </section>
             )}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl" style={{ backgroundColor: '#EEF2FF' }}>
-              <Megaphone size={28} color="#243660" />
-            </div>
-            <p className="mt-4 text-sm font-bold" style={{ color: '#1A2847' }}>No announcements</p>
-            <p className="mt-1 text-xs" style={{ color: '#9AABC4' }}>Property updates will appear here.</p>
-          </div>
+          <EmptyState icon={Megaphone} title="No announcements" description="Property updates will appear here." className="py-20" />
         )}
-      </div>
-    </div>
-  )
-}
-
-function AnnouncementCard({
-  announcement,
-  important = false,
-  onOpen,
-}: {
-  announcement: { id: string; title: string; content: string; category: string; date: string }
-  important?: boolean
-  onOpen: () => void
-}) {
-  const cc = categoryColors[announcement.category] ?? { bg: '#EEF2FF', text: '#243660' }
-  const iconBg = important ? '#FFF1F0' : cc.bg
-  const iconColor = important ? '#EF4444' : cc.text
-
-  return (
-    <button
-      onClick={onOpen}
-      className="rounded-2xl bg-white p-4 text-left shadow-sm transition-transform active:scale-[0.98]"
-      style={{ border: important ? '1.5px solid #FECACA' : '1px solid #EEF2F7' }}
-    >
-      <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: iconBg }}>
-          <Megaphone size={18} color={iconColor} />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold" style={{ color: '#1A2847' }}>{announcement.title}</p>
-              <p className="mt-1 line-clamp-2 text-xs leading-relaxed" style={{ color: '#5A6A8A' }}>{announcement.content}</p>
-            </div>
-            <ChevronRight size={16} color="#9AABC4" className="mt-0.5 flex-shrink-0" />
-          </div>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <span className="rounded-full px-2 py-0.5 text-xs font-semibold" style={{ backgroundColor: cc.bg, color: cc.text }}>
-              {announcement.category}
-            </span>
-            <span className="text-xs" style={{ color: '#9AABC4' }}>{announcement.date}</span>
-          </div>
-        </div>
-      </div>
-    </button>
+      </ScreenBody>
+    </Screen>
   )
 }

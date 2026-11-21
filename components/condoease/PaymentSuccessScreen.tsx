@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { CheckCircle, Download, Home, Share2 } from 'lucide-react'
+import { CheckCircle, Clock, Download, Home, Share2 } from 'lucide-react'
 import { apiRequest } from '@/lib/api'
 import { useMobileData } from './mobile-data'
+import { DetailRow, EmptyState, MobileButton, MobileCard, Screen, ScreenBody } from './mobile-kit'
 import { downloadPaymentReceipt, fallbackReference, sharePaymentReceipt } from './payment-receipt'
 
 interface PaymentSuccessScreenProps {
@@ -76,28 +77,27 @@ export function PaymentSuccessScreen({ billId, method = 'xendit', onNavigate }: 
 
   if (checking) {
     return (
-      <div className="flex h-full flex-col items-center justify-center px-6 text-center" style={{ background: '#F4F6FA' }}>
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#243660] border-t-transparent" />
-        <p className="mt-4 text-sm font-semibold" style={{ color: '#1A2847' }}>Confirming your payment with Xendit...</p>
-      </div>
+      <Screen className="items-center justify-center px-6 text-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        <p className="mt-4 text-sm font-semibold text-foreground">Confirming your payment with Xendit...</p>
+      </Screen>
     )
   }
 
   if (loadError || !paymentStatus?.paid || !bill) {
     return (
-      <div className="flex h-full flex-col items-center justify-center px-6 text-center" style={{ background: '#F4F6FA' }}>
-        <p className="text-base font-bold" style={{ color: '#1A2847' }}>Payment confirmation pending</p>
-        <p className="mt-2 max-w-sm text-sm" style={{ color: '#5A6A8A' }}>
-          {loadError || 'The paid bill could not be loaded.'}
-        </p>
-        <button
-          onClick={() => onNavigate('bills')}
-          className="mt-5 rounded-2xl px-5 py-3 text-sm font-bold text-white"
-          style={{ backgroundColor: '#243660' }}
-        >
-          Back to Bills
-        </button>
-      </div>
+      <Screen className="items-center justify-center px-6">
+        <EmptyState
+          icon={Clock}
+          title="Payment confirmation pending"
+          description={<span className="block max-w-sm text-sm">{loadError || 'The paid bill could not be loaded.'}</span>}
+          action={
+            <MobileButton onClick={() => onNavigate('bills')} className="w-auto">
+              Back to Bills
+            </MobileButton>
+          }
+        />
+      </Screen>
     )
   }
 
@@ -109,112 +109,106 @@ export function PaymentSuccessScreen({ billId, method = 'xendit', onNavigate }: 
   const timeStr = now.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' })
 
   return (
-    <div className="mobile-scroll flex h-full flex-col" style={{ background: '#F4F6FA' }}>
-      <div
-        className="flex flex-col items-center px-5 pb-8 pt-14"
-        style={{ background: 'linear-gradient(150deg, #1a2847 0%, #243660 100%)', borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }}
-      >
-        <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full" style={{ backgroundColor: 'rgba(34,197,94,0.2)' }}>
-          <CheckCircle size={44} color="#22C55E" />
+    <Screen>
+      <ScreenBody className="pt-14">
+        <div className="flex flex-col items-center px-2 pb-2 text-center">
+          <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-50 ring-8 ring-emerald-50/60">
+            <CheckCircle className="h-11 w-11 text-emerald-500" />
+          </div>
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">Payment Successful!</h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            Your payment has been processed and confirmed.
+          </p>
+          <p className="mt-4 text-4xl font-semibold tracking-tight tabular-nums text-foreground">
+            PHP {bill.amount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+          </p>
         </div>
-        <h1 className="text-xl font-bold text-white">Payment Successful!</h1>
-        <p className="mt-2 text-center text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>
-          Your payment has been processed and confirmed.
-        </p>
-        <p className="mt-4 text-3xl font-bold" style={{ color: '#FF8A1C' }}>
-          PHP {bill.amount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
-        </p>
-      </div>
 
-      <div className="mx-5 mt-5">
-        <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
-          <div className="px-5 py-4" style={{ background: '#F8FAFC', borderBottom: '1.5px dashed #E2E8F0' }}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium" style={{ color: '#9AABC4' }}>Verification Reference</p>
-                <p className="text-sm font-bold" style={{ color: '#1A2847' }}>{receiptNo}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-xs font-medium" style={{ color: '#9AABC4' }}>Date & Time</p>
-                <p className="text-xs font-semibold" style={{ color: '#1A2847' }}>{dateStr}</p>
-                <p className="text-xs" style={{ color: '#9AABC4' }}>{timeStr}</p>
-              </div>
+        <MobileCard className="overflow-hidden">
+          <div className="flex items-start justify-between gap-4 border-b border-dashed border-border bg-muted/50 px-5 py-4">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-muted-foreground">Verification Reference</p>
+              <p className="break-all text-sm font-semibold text-foreground">{receiptNo}</p>
+            </div>
+            <div className="shrink-0 text-right">
+              <p className="text-xs font-medium text-muted-foreground">Date & Time</p>
+              <p className="text-xs font-semibold text-foreground">{dateStr}</p>
+              <p className="text-xs text-muted-foreground">{timeStr}</p>
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 px-5 py-4">
-            {[
-              { label: 'Tenant', value: tenant.name },
-              { label: 'Unit', value: [tenant.unit, tenant.building].filter(Boolean).join(' - ') },
-              { label: 'Bill Period', value: bill.month },
-              { label: 'Payment Method', value: methodLabels[method] ?? method },
-              { label: 'Payment Hash', value: verificationHash || '-' },
-              { label: 'Xendit Transaction', value: providerReference || '-' },
-            ].map(row => (
-              <div key={row.label} className="flex items-start justify-between gap-4">
-                <span className="text-sm" style={{ color: '#5A6A8A' }}>{row.label}</span>
-                <span className="max-w-[58%] break-all text-right text-sm font-semibold" style={{ color: '#1A2847' }}>{row.value}</span>
-              </div>
-            ))}
+          <div className="px-5 py-2">
+            <div className="divide-y divide-border">
+              {[
+                { label: 'Tenant', value: tenant.name },
+                { label: 'Unit', value: [tenant.unit, tenant.building].filter(Boolean).join(' - ') },
+                { label: 'Bill Period', value: bill.month },
+                { label: 'Payment Method', value: methodLabels[method] ?? method },
+                { label: 'Payment Hash', value: verificationHash || '-' },
+                { label: 'Xendit Transaction', value: providerReference || '-' },
+              ].map(row => (
+                <DetailRow key={row.label} label={row.label} value={<span className="break-all">{row.value}</span>} />
+              ))}
+            </div>
 
-            <div className="flex items-center justify-between border-t pt-3" style={{ borderColor: '#F1F5F9' }}>
-              <span className="text-base font-bold" style={{ color: '#1A2847' }}>Amount Paid</span>
-              <span className="text-base font-bold" style={{ color: '#22C55E' }}>
+            <div className="flex items-center justify-between border-t border-border py-3">
+              <span className="text-sm font-semibold text-foreground">Amount Paid</span>
+              <span className="text-base font-semibold tabular-nums text-emerald-600">
                 PHP {bill.amount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
               </span>
             </div>
           </div>
 
-          <div className="mx-5 mb-5 flex items-center justify-center gap-2 rounded-xl py-3" style={{ background: '#F0FDF4', border: '1px solid #BBF7D0' }}>
-            <CheckCircle size={16} color="#22C55E" />
-            <span className="text-sm font-bold" style={{ color: '#22C55E' }}>
+          <div className="mx-5 mb-5 flex items-center justify-center gap-2 rounded-xl bg-emerald-50 py-3 text-emerald-700">
+            <CheckCircle className="h-4 w-4" />
+            <span className="text-sm font-semibold">
               {paymentStatus?.verification?.verified ? 'Payment Chain Verified' : 'Payment Confirmed'}
             </span>
           </div>
+        </MobileCard>
+
+        {(paymentStatus?.verification?.reason || actionMessage) && (
+          <div className="space-y-2">
+            {paymentStatus?.verification?.reason && (
+              <p className="text-center text-xs font-medium text-rose-600">{paymentStatus.verification.reason}</p>
+            )}
+            {actionMessage && (
+              <p className="text-center text-xs font-semibold text-primary">{actionMessage}</p>
+            )}
+          </div>
+        )}
+
+        <div className="space-y-3">
+          <div className="flex gap-3">
+            <MobileButton
+              variant="outline"
+              onClick={() => {
+                void sharePaymentReceipt(bill, tenant)
+                  .then(setActionMessage)
+                  .catch(() => setActionMessage('Unable to share receipt.'))
+              }}
+            >
+              <Share2 className="h-4 w-4" />
+              Share
+            </MobileButton>
+            <MobileButton
+              variant="outline"
+              onClick={() => {
+                downloadPaymentReceipt(bill, tenant)
+                setActionMessage('Receipt downloaded.')
+              }}
+            >
+              <Download className="h-4 w-4" />
+              Download
+            </MobileButton>
+          </div>
+
+          <MobileButton onClick={() => onNavigate('home')}>
+            <Home className="h-[18px] w-[18px]" />
+            Back to Home
+          </MobileButton>
         </div>
-      </div>
-
-      {paymentStatus?.verification?.reason && (
-        <p className="mx-5 mt-3 text-center text-xs font-medium" style={{ color: '#DC2626' }}>{paymentStatus.verification.reason}</p>
-      )}
-      {actionMessage && (
-        <p className="mx-5 mt-3 text-center text-xs font-semibold" style={{ color: '#243660' }}>{actionMessage}</p>
-      )}
-
-      <div className="mx-5 mt-5 flex gap-3">
-        <button
-          onClick={() => {
-            void sharePaymentReceipt(bill, tenant)
-              .then(setActionMessage)
-              .catch(() => setActionMessage('Unable to share receipt.'))
-          }}
-          className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-semibold"
-          style={{ background: '#EEF2FF', color: '#243660', border: '1.5px solid #C7D2FE' }}
-        >
-          <Share2 size={16} />
-          Share
-        </button>
-        <button
-          onClick={() => {
-            downloadPaymentReceipt(bill, tenant)
-            setActionMessage('Receipt downloaded.')
-          }}
-          className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-semibold"
-          style={{ background: '#F0FDF4', color: '#22C55E', border: '1.5px solid #BBF7D0' }}
-        >
-          <Download size={16} />
-          Download
-        </button>
-      </div>
-
-      <button
-        onClick={() => onNavigate('home')}
-        className="mx-5 mb-6 mt-4 flex items-center justify-center gap-2 rounded-2xl py-4 text-base font-bold text-white active:opacity-80"
-        style={{ backgroundColor: '#243660' }}
-      >
-        <Home size={18} />
-        Back to Home
-      </button>
-    </div>
+      </ScreenBody>
+    </Screen>
   )
 }

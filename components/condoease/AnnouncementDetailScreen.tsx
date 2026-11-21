@@ -1,19 +1,13 @@
 'use client'
 
-import { ChevronLeft, Megaphone, Calendar, Tag } from 'lucide-react'
+import { Megaphone, Calendar, Tag } from 'lucide-react'
 import { useMobileData } from './mobile-data'
+import { EmptyState, IconChip, MobileButton, MobileCard, Screen, ScreenBody, ScreenHeader, StatusPill } from './mobile-kit'
+import { getCategoryTone } from './AnnouncementsScreen'
 
 interface AnnouncementDetailScreenProps {
   announcementId: string
   onBack: () => void
-}
-
-const categoryColors: Record<string, { bg: string; text: string }> = {
-  Utilities: { bg: '#EFF6FF', text: '#3B82F6' },
-  Billing: { bg: '#FFF3E0', text: '#FF8A1C' },
-  Amenities: { bg: '#F0FDF4', text: '#22C55E' },
-  Safety: { bg: '#FFF1F0', text: '#EF4444' },
-  General: { bg: '#EEF2FF', text: '#243660' },
 }
 
 export function AnnouncementDetailScreen({ announcementId, onBack }: AnnouncementDetailScreenProps) {
@@ -22,71 +16,58 @@ export function AnnouncementDetailScreen({ announcementId, onBack }: Announcemen
 
   if (!ann) {
     return (
-      <div className="flex flex-col h-full items-center justify-center px-6 text-center" style={{ background: '#F4F6FA' }}>
-        <p className="text-base font-bold" style={{ color: '#1A2847' }}>Announcement not found</p>
-        <button onClick={onBack} className="mt-4 px-5 py-3 rounded-2xl text-sm font-bold text-white" style={{ backgroundColor: '#243660' }}>
-          Back
-        </button>
-      </div>
+      <Screen className="items-center justify-center px-6">
+        <EmptyState
+          icon={Megaphone}
+          title="Announcement not found"
+          action={
+            <MobileButton onClick={onBack} className="w-auto">
+              Back
+            </MobileButton>
+          }
+        />
+      </Screen>
     )
   }
-  const cc = categoryColors[ann.category] ?? { bg: '#EEF2FF', text: '#243660' }
 
   return (
-    <div className="flex flex-col h-full" style={{ background: '#F4F6FA' }}>
-      {/* Header */}
-      <div
-        className="px-5 pt-12 pb-6"
-        style={{ background: 'linear-gradient(150deg, #1a2847 0%, #243660 100%)', borderBottomLeftRadius: 28, borderBottomRightRadius: 28 }}
-      >
-        <button onClick={onBack} className="flex items-center gap-2 mb-4">
-          <ChevronLeft size={20} color="rgba(255,255,255,0.7)" />
-          <span className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.7)' }}>Announcements</span>
-        </button>
-        <div className="flex items-start gap-3">
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}>
-            <Megaphone size={22} color="white" />
-          </div>
-          <div>
-            {ann.important && (
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full mb-2 inline-block" style={{ backgroundColor: 'rgba(239,68,68,0.2)', color: '#FCA5A5' }}>
-                Important Notice
-              </span>
-            )}
-            <h1 className="text-lg font-bold text-white leading-tight">{ann.title}</h1>
-          </div>
-        </div>
-      </div>
+    <Screen>
+      <ScreenHeader title="Announcements" onBack={onBack} />
 
-      <div className="flex-1 mobile-scroll px-5 py-5 flex flex-col gap-4">
-        {/* Meta */}
-        <div className="bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm">
-          <div className="flex items-center gap-2">
-            <Calendar size={15} color="#9AABC4" />
-            <span className="text-sm font-medium" style={{ color: '#5A6A8A' }}>{ann.date}</span>
-          </div>
-          <div className="w-px h-4" style={{ backgroundColor: '#E2E8F0' }} />
-          <div className="flex items-center gap-2">
-            <Tag size={15} color="#9AABC4" />
-            <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: cc.bg, color: cc.text }}>
-              {ann.category}
-            </span>
+      <ScreenBody className="space-y-4">
+        {/* Title */}
+        <div className="flex items-start gap-3 px-1 pt-1">
+          <IconChip icon={Megaphone} tone={ann.important ? 'danger' : 'primary'} className="h-12 w-12 rounded-2xl" />
+          <div className="min-w-0 flex-1">
+            {ann.important && <StatusPill tone="danger" className="mb-2">Important Notice</StatusPill>}
+            <h1 className="text-xl font-semibold leading-tight tracking-tight text-foreground">{ann.title}</h1>
           </div>
         </div>
+
+        {/* Meta */}
+        <MobileCard className="flex items-center gap-4 p-4">
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium text-muted-foreground">{ann.date}</span>
+          </div>
+          <div className="h-4 w-px bg-border" />
+          <div className="flex items-center gap-2">
+            <Tag className="h-4 w-4 text-muted-foreground" />
+            <StatusPill tone={getCategoryTone(ann.category)}>{ann.category}</StatusPill>
+          </div>
+        </MobileCard>
 
         {/* Content */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm">
-          <p className="text-sm leading-relaxed" style={{ color: '#1A2847', lineHeight: '1.7' }}>
-            {ann.content}
-          </p>
-        </div>
+        <MobileCard className="p-5">
+          <p className="text-sm leading-[1.7] text-foreground">{ann.content}</p>
+        </MobileCard>
 
         {/* Management info */}
-        <div className="rounded-2xl p-4" style={{ background: '#EEF2FF', border: '1px solid #C7D2FE' }}>
-          <p className="text-xs font-semibold" style={{ color: '#243660' }}>CondoEase Management</p>
-          <p className="text-xs mt-0.5" style={{ color: '#5A6A8A' }}>For questions and concerns, contact your property administration office.</p>
+        <div className="rounded-2xl bg-primary/5 p-4">
+          <p className="text-xs font-semibold text-primary">CondoEase Management</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">For questions and concerns, contact your property administration office.</p>
         </div>
-      </div>
-    </div>
+      </ScreenBody>
+    </Screen>
   )
 }
