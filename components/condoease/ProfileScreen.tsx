@@ -1,10 +1,14 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import type { HTMLAttributes, ReactNode } from 'react'
 import Image from 'next/image'
-import { Camera, Calendar, ChevronRight, Edit3, Home, LogOut, Mail, Phone, Shield, X } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+import { Building2, Calendar, Camera, Edit3, Home, Layers, LogOut, Mail, Phone, Shield, X } from 'lucide-react'
 import { saveStoredUser, updatePassword, updateProfile, type ApiUser } from '@/lib/api'
+import { cn } from '@/lib/utils'
 import { useMobileData } from './mobile-data'
+import { IconButton, IconChip, InlineAlert, ListCard, ListRow, MobileButton, MobileCard, Screen, ScreenBody, ScreenHeader, SectionTitle } from './mobile-kit'
 
 interface ProfileScreenProps {
   user?: ApiUser | null
@@ -69,127 +73,92 @@ export function ProfileScreen({ user, onUserUpdate, onLogout }: ProfileScreenPro
     }
   }
 
+  const email = user?.email || tenant.email
+
   return (
-    <div className="flex flex-col h-full mobile-scroll" style={{ background: '#F4F6FA' }}>
-      <div
-        className="px-5 pt-12 pb-8 flex flex-col items-center"
-        style={{ background: 'linear-gradient(150deg, #1a2847 0%, #243660 100%)', borderBottomLeftRadius: 28, borderBottomRightRadius: 28 }}
-      >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/jpeg,image/png"
-          className="hidden"
-          onChange={event => handlePhotoChange(event.target.files?.[0])}
-        />
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={savingPhoto}
-          className="relative w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold text-white mb-4 overflow-hidden active:opacity-80"
-          style={{ backgroundColor: '#FF8A1C' }}
-          aria-label="Change profile photo"
-        >
-          {photoUrl ? (
-            <Image src={photoUrl} alt="Profile" fill sizes="80px" unoptimized className="object-cover" />
-          ) : (
-            initials
+    <Screen>
+      <ScreenHeader title="Profile" />
+
+      <ScreenBody>
+        {/* Profile header */}
+        <MobileCard className="flex flex-col items-center px-4 pb-5 pt-6 text-center">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png"
+            className="hidden"
+            onChange={event => handlePhotoChange(event.target.files?.[0])}
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={savingPhoto}
+            className="relative mb-3 h-20 w-20 rounded-full active:opacity-80"
+            aria-label="Change profile photo"
+          >
+            <span className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-primary text-2xl font-semibold text-primary-foreground ring-4 ring-primary/10">
+              {photoUrl ? (
+                <Image src={photoUrl} alt="Profile" fill sizes="80px" unoptimized className="object-cover" />
+              ) : (
+                initials
+              )}
+            </span>
+            <span className="absolute -bottom-0.5 -right-0.5 flex h-7 w-7 items-center justify-center rounded-full border border-border bg-card text-primary shadow-xs">
+              {savingPhoto ? <span className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" /> : <Camera className="h-3.5 w-3.5" />}
+            </span>
+          </button>
+          <h2 className="text-xl font-semibold tracking-tight text-foreground">{fullName}</h2>
+          {email && <p className="mt-0.5 text-sm text-muted-foreground">{email}</p>}
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+              <Home className="h-3.5 w-3.5" />
+              {tenant.unit}
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+              <Building2 className="h-3.5 w-3.5" />
+              {tenant.building}
+            </span>
+          </div>
+          {(photoError || photoNotice) && (
+            <InlineAlert tone={photoError ? 'danger' : 'success'} className="mt-4 w-full px-3 py-2 text-center text-xs font-semibold">
+              {photoError || photoNotice}
+            </InlineAlert>
           )}
-          <span className="absolute bottom-0 right-0 h-7 w-7 rounded-full flex items-center justify-center" style={{ background: '#FFFFFF', color: '#243660', border: '2px solid #243660' }}>
-            {savingPhoto ? <span className="h-3 w-3 rounded-full border-2 border-current border-t-transparent animate-spin" /> : <Camera size={14} />}
-          </span>
-        </button>
-        <h1 className="text-xl font-bold text-white">{fullName}</h1>
-        <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.6)' }}>{tenant.unit}</p>
-        {(photoError || photoNotice) && (
-          <p className="mt-3 rounded-xl px-3 py-2 text-center text-xs font-semibold" style={{ background: photoError ? 'rgba(239,68,68,0.18)' : 'rgba(34,197,94,0.18)', color: '#FFFFFF' }}>
-            {photoError || photoNotice}
-          </p>
-        )}
+        </MobileCard>
 
-        <div
-          className="mt-4 px-4 py-2 rounded-xl flex items-center gap-2"
-          style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.1)' }}
-        >
-          <Home size={14} color="rgba(255,255,255,0.7)" />
-          <span className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.7)' }}>
-            {tenant.building}
-          </span>
+        <section>
+          <SectionTitle title="Unit Information" />
+          <ListCard>
+            <InfoRow icon={Home} label="Unit" value={tenant.unit} />
+            <InfoRow icon={Layers} label="Floor" value={tenant.floor} />
+            <InfoRow icon={Calendar} label="Address" value={address || tenant.address || 'No address on file'} />
+          </ListCard>
+        </section>
+
+        <section>
+          <SectionTitle title="Contact Details" />
+          <ListCard>
+            <InfoRow icon={Mail} label="Email" value={user?.email || tenant.email} />
+            <InfoRow icon={Phone} label="Phone" value={user?.contactNumber || tenant.phone} />
+          </ListCard>
+        </section>
+
+        <section>
+          <SectionTitle title="Settings" />
+          <ListCard>
+            <ListRow icon={Edit3} title="Edit Profile" subtitle="Update personal details" onClick={() => setEditOpen(true)} />
+            <ListRow icon={Shield} title="Security" subtitle="Change password" onClick={() => setSecurityOpen(true)} />
+          </ListCard>
+        </section>
+
+        <div>
+          <MobileButton variant="outline" onClick={() => setConfirmLogout(true)} className="text-destructive hover:bg-destructive/5">
+            <LogOut className="h-[18px] w-[18px]" />
+            Log Out
+          </MobileButton>
+          <p className="mt-3 text-center text-xs text-muted-foreground">CondoEase v1.0.0 - Tenant App</p>
         </div>
-      </div>
-
-      <div className="mx-5 mt-5">
-        <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#9AABC4' }}>Unit Information</p>
-        <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
-          {[
-            { icon: Home, label: 'Unit', value: tenant.unit },
-            { icon: Home, label: 'Floor', value: tenant.floor },
-            { icon: Calendar, label: 'Address', value: address || tenant.address || 'No address on file' },
-          ].map((item, index) => (
-            <div key={index} className="flex items-center gap-4 px-5 py-4 border-b last:border-b-0" style={{ borderColor: '#F1F5F9' }}>
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#EEF2FF' }}>
-                <item.icon size={16} color="#243660" />
-              </div>
-              <div className="flex-1">
-                <p className="text-xs" style={{ color: '#9AABC4' }}>{item.label}</p>
-                <p className="text-sm font-semibold" style={{ color: '#1A2847' }}>{item.value}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="mx-5 mt-5">
-        <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#9AABC4' }}>Contact Details</p>
-        <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
-          {[
-            { icon: Mail, label: 'Email', value: user?.email || tenant.email },
-            { icon: Phone, label: 'Phone', value: user?.contactNumber || tenant.phone },
-          ].map((item, index) => (
-            <div key={index} className="flex items-center gap-4 px-5 py-4 border-b last:border-b-0" style={{ borderColor: '#F1F5F9' }}>
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#EEF2FF' }}>
-                <item.icon size={16} color="#243660" />
-              </div>
-              <div className="flex-1">
-                <p className="text-xs" style={{ color: '#9AABC4' }}>{item.label}</p>
-                <p className="text-sm font-semibold" style={{ color: '#1A2847' }}>{item.value}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="mx-5 mt-5">
-        <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: '#9AABC4' }}>Settings</p>
-        <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
-          {[
-            { icon: Edit3, label: 'Edit Profile', desc: 'Update personal details', onClick: () => setEditOpen(true) },
-            { icon: Shield, label: 'Security', desc: 'Change password', onClick: () => setSecurityOpen(true) },
-          ].map((item, index) => (
-            <button key={index} onClick={item.onClick} className="w-full flex items-center gap-4 px-5 py-4 border-b last:border-b-0 text-left" style={{ borderColor: '#F1F5F9' }}>
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#EEF2FF' }}>
-                <item.icon size={16} color="#243660" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-semibold" style={{ color: '#1A2847' }}>{item.label}</p>
-                <p className="text-xs" style={{ color: '#9AABC4' }}>{item.desc}</p>
-              </div>
-              <ChevronRight size={16} color="#9AABC4" />
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="mx-5 mt-5 mb-8">
-        <button
-          onClick={() => setConfirmLogout(true)}
-          className="w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2 active:opacity-80"
-          style={{ backgroundColor: '#FFF1F0', color: '#EF4444', border: '1.5px solid #FECACA' }}
-        >
-          <LogOut size={18} />
-          Log Out
-        </button>
-        <p className="text-center text-xs mt-3" style={{ color: '#9AABC4' }}>CondoEase v1.0.0 - Tenant App</p>
-      </div>
+      </ScreenBody>
 
       {editOpen && (
         <EditProfileSheet
@@ -209,38 +178,45 @@ export function ProfileScreen({ user, onUserUpdate, onLogout }: ProfileScreenPro
       )}
 
       {confirmLogout && (
-        <div className="fixed inset-0 z-50 flex flex-col" style={{ background: 'rgba(26,40,71,0.45)' }}>
-          <div className="flex-1" onClick={() => setConfirmLogout(false)} />
-          <div className="rounded-t-3xl bg-white px-6 pb-6 pt-4 shadow-xl">
-            <div className="mb-5 flex items-start justify-between gap-4">
-              <div>
-                <h2 className="text-lg font-bold" style={{ color: '#1A2847' }}>Log out?</h2>
-                <p className="mt-1 text-sm" style={{ color: '#5A6A8A' }}>
-                  You will need to sign in again to access your tenant portal.
-                </p>
-              </div>
-              <button onClick={() => setConfirmLogout(false)} className="h-9 w-9 rounded-full flex items-center justify-center" style={{ background: '#F4F6FA' }}>
-                <X size={18} color="#5A6A8A" />
-              </button>
-            </div>
-            <button
-              onClick={onLogout}
-              className="w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2"
-              style={{ backgroundColor: '#EF4444', color: '#FFFFFF' }}
-            >
-              <LogOut size={18} />
-              Log Out
-            </button>
-            <button
-              onClick={() => setConfirmLogout(false)}
-              className="mt-3 w-full py-3 text-sm font-semibold"
-              style={{ color: '#5A6A8A' }}
-            >
-              Stay Signed In
-            </button>
-          </div>
-        </div>
+        <SheetOverlay onDismiss={() => setConfirmLogout(false)}>
+          <SheetHeader
+            title="Log out?"
+            desc="You will need to sign in again to access your tenant portal."
+            onClose={() => setConfirmLogout(false)}
+          />
+          <MobileButton variant="danger" onClick={onLogout}>
+            <LogOut className="h-[18px] w-[18px]" />
+            Log Out
+          </MobileButton>
+          <MobileButton variant="ghost" onClick={() => setConfirmLogout(false)} className="mt-2 text-muted-foreground">
+            Stay Signed In
+          </MobileButton>
+        </SheetOverlay>
       )}
+    </Screen>
+  )
+}
+
+function InfoRow({ icon, label, value }: { icon: LucideIcon; label: string; value: ReactNode }) {
+  return (
+    <div className="flex items-center gap-3 px-4 py-3.5">
+      <IconChip icon={icon} tone="primary" />
+      <div className="min-w-0 flex-1">
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="break-words text-sm font-semibold text-foreground">{value}</p>
+      </div>
+    </div>
+  )
+}
+
+function SheetOverlay({ onDismiss, children, className }: { onDismiss?: () => void; children: ReactNode; className?: string }) {
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col bg-foreground/40 backdrop-blur-[2px]">
+      <div className="flex-1" onClick={onDismiss} />
+      <div className={cn('rounded-t-3xl border-t border-border bg-card px-6 pb-6 pt-3', className)}>
+        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
+        {children}
+      </div>
     </div>
   )
 }
@@ -299,23 +275,20 @@ function EditProfileSheet({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col" style={{ background: 'rgba(26,40,71,0.45)' }}>
-      <div className="flex-1" onClick={saving ? undefined : onClose} />
-      <div className="max-h-[86vh] rounded-t-3xl bg-white px-6 pb-6 pt-4 shadow-xl mobile-scroll">
-        <SheetHeader title="Edit Profile" desc="Update your tenant profile details." onClose={onClose} disabled={saving} />
-        <div className="flex flex-col gap-3">
-          <SheetInput label="First Name" value={form.firstName} onChange={value => update('firstName', value)} />
-          <SheetInput label="Last Name" value={form.lastName} onChange={value => update('lastName', value)} />
-          <SheetInput label="Contact Number" value={form.contactNumber} onChange={value => update('contactNumber', value)} inputMode="tel" />
-          <SheetInput label="Unit / Street" value={form.unitStreet} onChange={value => update('unitStreet', value)} />
-          <SheetInput label="Barangay" value={form.barangay} onChange={value => update('barangay', value)} />
-          <SheetInput label="City" value={form.city} onChange={value => update('city', value)} />
-          <SheetInput label="Region" value={form.region} onChange={value => update('region', value)} />
-          {error && <SheetMessage tone="error">{error}</SheetMessage>}
-          <SheetPrimaryButton loading={saving} label="Save Changes" onClick={save} />
-        </div>
+    <SheetOverlay onDismiss={saving ? undefined : onClose} className="mobile-scroll max-h-[86vh]">
+      <SheetHeader title="Edit Profile" desc="Update your tenant profile details." onClose={onClose} disabled={saving} />
+      <div className="flex flex-col gap-3">
+        <SheetInput label="First Name" value={form.firstName} onChange={value => update('firstName', value)} />
+        <SheetInput label="Last Name" value={form.lastName} onChange={value => update('lastName', value)} />
+        <SheetInput label="Contact Number" value={form.contactNumber} onChange={value => update('contactNumber', value)} inputMode="tel" />
+        <SheetInput label="Unit / Street" value={form.unitStreet} onChange={value => update('unitStreet', value)} />
+        <SheetInput label="Barangay" value={form.barangay} onChange={value => update('barangay', value)} />
+        <SheetInput label="City" value={form.city} onChange={value => update('city', value)} />
+        <SheetInput label="Region" value={form.region} onChange={value => update('region', value)} />
+        {error && <SheetMessage tone="error">{error}</SheetMessage>}
+        <SheetPrimaryButton loading={saving} label="Save Changes" onClick={save} />
       </div>
-    </div>
+    </SheetOverlay>
   )
 }
 
@@ -361,20 +334,17 @@ function SecuritySheet({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col" style={{ background: 'rgba(26,40,71,0.45)' }}>
-      <div className="flex-1" onClick={saving ? undefined : onClose} />
-      <div className="rounded-t-3xl bg-white px-6 pb-6 pt-4 shadow-xl">
-        <SheetHeader title="Security" desc="Change your account password." onClose={onClose} disabled={saving} />
-        <div className="flex flex-col gap-3">
-          <SheetInput label="Current Password" value={currentPassword} onChange={(value) => { setCurrentPassword(value); setError(null); setNotice(null) }} type="password" />
-          <SheetInput label="New Password" value={newPassword} onChange={(value) => { setNewPassword(value); setError(null); setNotice(null) }} type="password" />
-          <SheetInput label="Confirm Password" value={confirmPassword} onChange={(value) => { setConfirmPassword(value); setError(null); setNotice(null) }} type="password" />
-          {error && <SheetMessage tone="error">{error}</SheetMessage>}
-          {notice && <SheetMessage tone="success">{notice}</SheetMessage>}
-          <SheetPrimaryButton loading={saving} label="Update Password" onClick={save} />
-        </div>
+    <SheetOverlay onDismiss={saving ? undefined : onClose}>
+      <SheetHeader title="Security" desc="Change your account password." onClose={onClose} disabled={saving} />
+      <div className="flex flex-col gap-3">
+        <SheetInput label="Current Password" value={currentPassword} onChange={(value) => { setCurrentPassword(value); setError(null); setNotice(null) }} type="password" />
+        <SheetInput label="New Password" value={newPassword} onChange={(value) => { setNewPassword(value); setError(null); setNotice(null) }} type="password" />
+        <SheetInput label="Confirm Password" value={confirmPassword} onChange={(value) => { setConfirmPassword(value); setError(null); setNotice(null) }} type="password" />
+        {error && <SheetMessage tone="error">{error}</SheetMessage>}
+        {notice && <SheetMessage tone="success">{notice}</SheetMessage>}
+        <SheetPrimaryButton loading={saving} label="Update Password" onClick={save} />
       </div>
-    </div>
+    </SheetOverlay>
   )
 }
 
@@ -382,12 +352,12 @@ function SheetHeader({ title, desc, onClose, disabled }: { title: string; desc: 
   return (
     <div className="mb-5 flex items-start justify-between gap-4">
       <div>
-        <h2 className="text-lg font-bold" style={{ color: '#1A2847' }}>{title}</h2>
-        <p className="mt-1 text-sm" style={{ color: '#5A6A8A' }}>{desc}</p>
+        <h2 className="text-lg font-semibold tracking-tight text-foreground">{title}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{desc}</p>
       </div>
-      <button onClick={onClose} disabled={disabled} className="h-9 w-9 rounded-full flex items-center justify-center" style={{ background: '#F4F6FA' }}>
-        <X size={18} color="#5A6A8A" />
-      </button>
+      <IconButton onClick={onClose} disabled={disabled} aria-label="Close" className="-mr-2 -mt-1 shrink-0 bg-muted text-muted-foreground">
+        <X className="h-[18px] w-[18px]" />
+      </IconButton>
     </div>
   )
 }
@@ -403,47 +373,34 @@ function SheetInput({
   value: string
   onChange: (value: string) => void
   type?: string
-  inputMode?: React.HTMLAttributes<HTMLInputElement>['inputMode']
+  inputMode?: HTMLAttributes<HTMLInputElement>['inputMode']
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-semibold" style={{ color: '#1A2847' }}>{label}</label>
+    <label className="flex flex-col gap-1.5">
+      <span className="text-sm font-medium text-foreground">{label}</span>
       <input
         type={type}
         value={value}
         onChange={event => onChange(event.target.value)}
         inputMode={inputMode}
-        className="rounded-xl px-4 py-3.5 text-sm outline-none"
-        style={{ background: '#F8FAFC', border: '1.5px solid #E2E8F0', color: '#1A2847' }}
+        className="h-12 w-full rounded-xl border border-input bg-card px-4 text-sm text-foreground outline-none transition-[color,box-shadow] placeholder:text-muted-foreground/70 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/20"
       />
-    </div>
+    </label>
   )
 }
 
 function SheetMessage({ tone, children }: { tone: 'error' | 'success'; children: string }) {
   return (
-    <div
-      className="rounded-xl p-3 text-xs font-medium"
-      style={{
-        background: tone === 'error' ? '#FEF2F2' : '#F0FDF4',
-        color: tone === 'error' ? '#DC2626' : '#15803D',
-        border: tone === 'error' ? '1px solid #FECACA' : '1px solid #BBF7D0',
-      }}
-    >
+    <InlineAlert tone={tone === 'error' ? 'danger' : 'success'} className="text-xs">
       {children}
-    </div>
+    </InlineAlert>
   )
 }
 
 function SheetPrimaryButton({ loading, label, onClick }: { loading: boolean; label: string; onClick: () => void }) {
   return (
-    <button
-      onClick={onClick}
-      disabled={loading}
-      className="mt-1 flex items-center justify-center gap-2 rounded-xl py-4 font-bold text-white text-base transition-opacity active:opacity-80"
-      style={{ backgroundColor: '#243660' }}
-    >
-      {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : label}
-    </button>
+    <MobileButton onClick={onClick} disabled={loading} className="mt-1">
+      {loading ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent" /> : label}
+    </MobileButton>
   )
 }

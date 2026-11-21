@@ -4,11 +4,22 @@ import { useState } from 'react'
 import type { ReactNode, HTMLAttributes } from 'react'
 import { Eye, EyeOff, Lock, Mail, ArrowRight, ShieldCheck, X } from 'lucide-react'
 import { Logo } from './Logo'
+import { IconButton, InlineAlert, MobileButton } from './mobile-kit'
 import { login, resetPasswordWithOtp, saveAuthSession, sendOtp, verifyOtp, type ApiUser } from '@/lib/api'
 
 interface LoginScreenProps {
   onLogin: (user: ApiUser) => void
   onSignUp: () => void
+}
+
+const inputWrapClass =
+  'flex h-12 items-center gap-3 rounded-xl border border-input bg-card px-4 transition-[color,box-shadow] focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/20'
+const inputClass = 'h-full min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/70'
+const labelClass = 'text-sm font-medium text-foreground'
+const iconClass = 'h-[18px] w-[18px] shrink-0 text-muted-foreground'
+
+function Spinner() {
+  return <span className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
 }
 
 export function LoginScreen({ onLogin, onSignUp }: LoginScreenProps) {
@@ -35,34 +46,30 @@ export function LoginScreen({ onLogin, onSignUp }: LoginScreenProps) {
   }
 
   return (
-    <div className="flex flex-col h-full" style={{ background: '#F4F6FA' }}>
-      {/* Top Navy Header */}
-      <div
-        className="flex flex-col items-center justify-end px-6 pb-10 pt-14"
-        style={{ background: 'linear-gradient(160deg, #1a2847 0%, #243660 100%)', borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }}
-      >
-        <Logo size="md" variant="full" className="mb-2 [&_span]:!text-white [&_span_span]:!text-[#FF8A1C]" />
-        <p className="text-sm mt-2" style={{ color: 'rgba(255,255,255,0.55)' }}>Tenant Portal</p>
-      </div>
+    <div className="relative flex h-full flex-col bg-background">
+      <div className="mobile-scroll flex flex-1 flex-col gap-5 px-6 pb-6 pt-14">
+        {/* Brand */}
+        <div className="flex flex-col items-start gap-1">
+          <Logo size="md" variant="full" />
+          <p className="mt-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">Tenant Portal</p>
+        </div>
 
-      {/* Form */}
-      <div className="flex-1 px-6 pt-8 pb-6 flex flex-col gap-5 overflow-y-auto">
-        <div>
-          <h1 className="text-2xl font-bold" style={{ color: '#1A2847' }}>Welcome back</h1>
-          <p className="text-sm mt-1" style={{ color: '#5A6A8A' }}>Sign in to your tenant account</p>
+        <div className="mt-4">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Welcome back</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Sign in to your tenant account</p>
         </div>
 
         {/* Email */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-semibold" style={{ color: '#1A2847' }}>Email Address</label>
-          <div className="flex items-center rounded-xl px-4 py-3.5 gap-3" style={{ background: '#fff', border: '1.5px solid #E2E8F0' }}>
-            <Mail size={18} style={{ color: '#9AABC4' }} />
+          <label htmlFor="login-email" className={labelClass}>Email Address</label>
+          <div className={inputWrapClass}>
+            <Mail className={iconClass} />
             <input
+              id="login-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="flex-1 bg-transparent text-sm outline-none"
-              style={{ color: '#1A2847' }}
+              className={inputClass}
               placeholder="your@email.com"
             />
           </div>
@@ -70,73 +77,66 @@ export function LoginScreen({ onLogin, onSignUp }: LoginScreenProps) {
 
         {/* Password */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-semibold" style={{ color: '#1A2847' }}>Password</label>
-          <div className="flex items-center rounded-xl px-4 py-3.5 gap-3" style={{ background: '#fff', border: '1.5px solid #E2E8F0' }}>
-            <Lock size={18} style={{ color: '#9AABC4' }} />
+          <div className="flex items-center justify-between">
+            <label htmlFor="login-password" className={labelClass}>Password</label>
+            <button type="button" onClick={() => setForgotOpen(true)} className="-my-2 py-2 text-sm font-semibold text-primary">
+              Forgot password?
+            </button>
+          </div>
+          <div className={inputWrapClass}>
+            <Lock className={iconClass} />
             <input
+              id="login-password"
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="flex-1 bg-transparent text-sm outline-none"
-              style={{ color: '#1A2847' }}
+              className={inputClass}
               placeholder="Password"
             />
-            <button type="button" onClick={() => setShowPassword(!showPassword)} className="p-1">
-              {showPassword ? <EyeOff size={18} style={{ color: '#9AABC4' }} /> : <Eye size={18} style={{ color: '#9AABC4' }} />}
-            </button>
+            <IconButton
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              className="-mr-3 text-muted-foreground"
+            >
+              {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
+            </IconButton>
           </div>
         </div>
 
-        <button onClick={() => setForgotOpen(true)} className="text-right text-sm font-semibold" style={{ color: '#FF8A1C' }}>
-          Forgot password?
-        </button>
-
-        {error && (
-          <div className="rounded-xl p-3 text-xs font-medium" style={{ background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA' }}>
-            {error}
-          </div>
-        )}
+        {error && <InlineAlert className="text-xs">{error}</InlineAlert>}
 
         {/* Login Button */}
-        <button
-          onClick={handleLogin}
-          disabled={loading}
-          className="flex items-center justify-center gap-2 rounded-xl py-4 font-bold text-white text-base transition-opacity active:opacity-80"
-          style={{ backgroundColor: '#243660' }}
-        >
+        <MobileButton onClick={handleLogin} disabled={loading}>
           {loading ? (
-            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            <Spinner />
           ) : (
             <>
               Sign In
-              <ArrowRight size={18} />
+              <ArrowRight className="h-[18px] w-[18px]" />
             </>
           )}
-        </button>
+        </MobileButton>
 
-        <button
-          onClick={onSignUp}
-          className="py-2 text-sm font-semibold"
-          style={{ color: '#FF8A1C' }}
-        >
+        <MobileButton variant="outline" onClick={onSignUp}>
           Create tenant account
-        </button>
+        </MobileButton>
 
         {/* Login notice */}
-        <div className="rounded-xl p-4" style={{ background: '#FFF3E0', border: '1px solid #FFD199' }}>
-          <p className="text-xs text-center font-medium" style={{ color: '#B85C00' }}>
+        <div className="flex items-start gap-2.5 rounded-xl border border-border bg-card px-4 py-3">
+          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
+          <p className="text-xs font-medium text-muted-foreground">
             Use your approved CondoEase tenant account to sign in.
           </p>
         </div>
 
         {/* Unit Info */}
-        <div className="mt-auto text-center">
-          <p className="text-xs" style={{ color: '#9AABC4' }}>
+        <div className="mt-auto pt-4 text-center">
+          <p className="text-xs text-muted-foreground">
             CondoEase Tenant Portal
           </p>
-          <p className="text-xs mt-1" style={{ color: '#9AABC4' }}>
+          <p className="mt-1 text-xs text-muted-foreground">
             Having trouble? Contact{' '}
-            <span className="font-semibold" style={{ color: '#243660' }}>support@condoease.ph</span>
+            <span className="font-semibold text-primary">support@condoease.ph</span>
           </p>
         </div>
       </div>
@@ -236,41 +236,42 @@ function ForgotPasswordSheet({ initialEmail, onClose }: { initialEmail: string; 
   }
 
   return (
-    <div className="absolute inset-0 z-50 flex flex-col" style={{ background: 'rgba(26,40,71,0.45)' }}>
+    <div className="absolute inset-0 z-50 flex flex-col bg-foreground/40 backdrop-blur-[2px]">
       <div className="flex-1" onClick={loading ? undefined : onClose} />
-      <div className="rounded-t-3xl bg-white px-6 pb-6 pt-4 shadow-xl">
-        <div className="mb-4 flex items-center justify-between">
+      <div className="rounded-t-3xl border-t border-border bg-card px-6 pb-6 pt-3">
+        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
+        <div className="mb-5 flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-lg font-bold" style={{ color: '#1A2847' }}>
+            <h2 className="text-lg font-semibold tracking-tight text-foreground">
               {step === 'done' ? 'Password Reset' : 'Forgot Password'}
             </h2>
-            <p className="text-xs mt-0.5" style={{ color: '#5A6A8A' }}>
+            <p className="mt-0.5 text-xs text-muted-foreground">
               {step === 'email' && 'Enter your account email.'}
               {step === 'otp' && `Enter the OTP sent to ${resetEmail}.`}
               {step === 'password' && 'Create a new password.'}
               {step === 'done' && 'Your account is ready.'}
             </p>
           </div>
-          <button onClick={onClose} disabled={loading} className="h-9 w-9 rounded-full flex items-center justify-center" style={{ background: '#F4F6FA' }}>
-            <X size={18} color="#5A6A8A" />
-          </button>
+          <IconButton onClick={onClose} disabled={loading} aria-label="Close" className="-mr-2 -mt-1 bg-muted text-muted-foreground">
+            <X className="h-[18px] w-[18px]" />
+          </IconButton>
         </div>
 
         <div className="flex flex-col gap-4">
           {step === 'email' && (
             <>
-              <SheetField label="Email Address" value={resetEmail} onChange={setResetEmail} placeholder="your@email.com" type="email" icon={<Mail size={18} color="#9AABC4" />} />
+              <SheetField label="Email Address" value={resetEmail} onChange={setResetEmail} placeholder="your@email.com" type="email" icon={<Mail className={iconClass} />} />
               <SheetButton loading={loading} label="Send OTP" onClick={sendResetOtp} />
             </>
           )}
 
           {step === 'otp' && (
             <>
-              <SheetField label="OTP Code" value={otp} onChange={setOtp} placeholder="6-digit code" inputMode="numeric" icon={<ShieldCheck size={18} color="#9AABC4" />} />
+              <SheetField label="OTP Code" value={otp} onChange={setOtp} placeholder="6-digit code" inputMode="numeric" icon={<ShieldCheck className={iconClass} />} />
               <SheetButton loading={loading} label="Verify OTP" onClick={verifyResetOtp} />
-              <button onClick={sendResetOtp} disabled={loading} className="py-2 text-sm font-semibold" style={{ color: '#FF8A1C' }}>
+              <MobileButton variant="ghost" onClick={sendResetOtp} disabled={loading} className="h-10">
                 Resend OTP
-              </button>
+              </MobileButton>
             </>
           )}
 
@@ -297,22 +298,15 @@ function ForgotPasswordSheet({ initialEmail, onClose }: { initialEmail: string; 
           )}
 
           {step === 'done' && (
-            <button onClick={onClose} className="w-full py-4 rounded-xl font-bold text-white text-base" style={{ backgroundColor: '#243660' }}>
+            <MobileButton onClick={onClose}>
               Back to Sign In
-            </button>
+            </MobileButton>
           )}
 
           {(error || notice) && (
-            <div
-              className="rounded-xl p-3 text-xs font-medium"
-              style={{
-                background: error ? '#FEF2F2' : '#F0FDF4',
-                color: error ? '#DC2626' : '#15803D',
-                border: error ? '1px solid #FECACA' : '1px solid #BBF7D0',
-              }}
-            >
+            <InlineAlert tone={error ? 'danger' : 'success'} className="text-xs">
               {error || notice}
-            </div>
+            </InlineAlert>
           )}
         </div>
       </div>
@@ -336,23 +330,22 @@ function SheetPasswordField({
   onToggle: () => void
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-semibold" style={{ color: '#1A2847' }}>{label}</label>
-      <div className="flex items-center rounded-xl px-4 py-3.5 gap-3" style={{ background: '#F8FAFC', border: '1.5px solid #E2E8F0' }}>
-        <Lock size={18} color="#9AABC4" />
+    <label className="flex flex-col gap-1.5">
+      <span className={labelClass}>{label}</span>
+      <div className={inputWrapClass}>
+        <Lock className={iconClass} />
         <input
           type={show ? 'text' : 'password'}
           value={value}
           onChange={event => onChange(event.target.value)}
-          className="flex-1 bg-transparent text-sm outline-none"
-          style={{ color: '#1A2847' }}
+          className={inputClass}
           placeholder={placeholder}
         />
-        <button type="button" onClick={onToggle} className="p-1">
-          {show ? <EyeOff size={18} color="#9AABC4" /> : <Eye size={18} color="#9AABC4" />}
-        </button>
+        <IconButton onClick={onToggle} aria-label={show ? 'Hide password' : 'Show password'} className="-mr-3 text-muted-foreground">
+          {show ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
+        </IconButton>
       </div>
-    </div>
+    </label>
   )
 }
 
@@ -374,40 +367,34 @@ function SheetField({
   icon?: ReactNode
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-semibold" style={{ color: '#1A2847' }}>{label}</label>
-      <div className="flex items-center rounded-xl px-4 py-3.5 gap-3" style={{ background: '#F8FAFC', border: '1.5px solid #E2E8F0' }}>
+    <label className="flex flex-col gap-1.5">
+      <span className={labelClass}>{label}</span>
+      <div className={inputWrapClass}>
         {icon}
         <input
           type={type}
           value={value}
           onChange={event => onChange(event.target.value)}
-          className="flex-1 bg-transparent text-sm outline-none"
-          style={{ color: '#1A2847' }}
+          className={inputClass}
           placeholder={placeholder}
           inputMode={inputMode}
         />
       </div>
-    </div>
+    </label>
   )
 }
 
 function SheetButton({ loading, label, onClick }: { loading: boolean; label: string; onClick: () => void }) {
   return (
-    <button
-      onClick={onClick}
-      disabled={loading}
-      className="flex items-center justify-center gap-2 rounded-xl py-4 font-bold text-white text-base transition-opacity active:opacity-80"
-      style={{ backgroundColor: '#243660' }}
-    >
+    <MobileButton onClick={onClick} disabled={loading}>
       {loading ? (
-        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+        <Spinner />
       ) : (
         <>
           {label}
-          <ArrowRight size={18} />
+          <ArrowRight className="h-[18px] w-[18px]" />
         </>
       )}
-    </button>
+    </MobileButton>
   )
 }

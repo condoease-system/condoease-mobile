@@ -184,10 +184,7 @@ export function CondoEaseApp() {
   return (
     <MobileDataProvider user={user}>
       <PullToRefresh>
-        <div
-          className="flex flex-col h-full overflow-hidden"
-          style={{ background: '#F4F6FA' }}
-        >
+        <div className="flex h-full flex-col overflow-hidden bg-background">
           {/* Screen area */}
           <div className="flex-1 overflow-hidden relative">
             {renderScreen()}
@@ -271,13 +268,9 @@ function PullToRefresh({ children }: { children: ReactNode }) {
         className="pointer-events-none absolute left-0 right-0 top-0 z-50 flex justify-center transition-transform duration-150"
         style={{ transform: `translateY(${pullDistance ? 10 : -58}px)` }}
       >
-        <div
-          className="mt-2 flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold shadow-md"
-          style={{ background: '#FFFFFF', color: '#243660', border: '1px solid #E2E8F0' }}
-        >
+        <div className="mt-2 flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold text-primary shadow-sm">
           <span
-            className={refreshing || loading ? 'h-3 w-3 rounded-full border-2 border-current border-t-transparent animate-spin' : 'h-2 w-2 rounded-full'}
-            style={{ background: refreshing || loading ? 'transparent' : '#22C55E' }}
+            className={refreshing || loading ? 'h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent' : 'h-2 w-2 rounded-full bg-emerald-500'}
           />
           {indicatorText}
         </div>

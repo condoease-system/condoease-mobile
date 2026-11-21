@@ -14,32 +14,26 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
   }, [onComplete])
 
   return (
-    <div
-      className="flex flex-col items-center justify-center h-full w-full relative overflow-hidden"
-      style={{ background: 'linear-gradient(160deg, #1a2847 0%, #243660 60%, #2d4a8a 100%)' }}
-    >
+    <div className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden bg-background">
       {/* Background decoration */}
-      <div className="absolute top-0 right-0 w-48 h-48 rounded-full opacity-10"
-        style={{ background: '#FF8A1C', transform: 'translate(40%, -40%)' }} />
-      <div className="absolute bottom-0 left-0 w-64 h-64 rounded-full opacity-10"
-        style={{ background: '#243B6B', transform: 'translate(-40%, 40%)' }} />
+      <div className="absolute right-0 top-0 h-48 w-48 translate-x-[40%] -translate-y-[40%] rounded-full bg-primary/5" />
+      <div className="absolute bottom-0 left-0 h-64 w-64 -translate-x-[40%] translate-y-[40%] rounded-full bg-primary/5" />
 
       {/* Logo */}
       <div className="flex flex-col items-center gap-4 animate-in fade-in zoom-in duration-700">
         <Logo size="lg" variant="icon" />
         <div className="flex flex-col items-center gap-1">
-          <span className="text-3xl font-bold text-white tracking-tight">
-            Condo<span style={{ color: '#FF8A1C' }}>Ease</span>
+          <span className="text-3xl font-semibold tracking-tight text-primary">
+            Condo<span className="text-accent">Ease</span>
           </span>
-          <span className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.6)' }}>
+          <span className="text-sm font-medium text-muted-foreground">
             Tenant Portal
           </span>
         </div>
       </div>
 
       {/* Tagline */}
-      <p className="mt-8 text-center text-sm font-medium animate-in fade-in duration-1000 delay-500"
-        style={{ color: 'rgba(255,255,255,0.5)' }}>
+      <p className="mt-8 text-center text-sm font-medium text-muted-foreground/80 animate-in fade-in duration-1000 delay-500">
         Your home, simplified.
       </p>
 
@@ -48,12 +42,8 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
         {[0, 1, 2].map((i) => (
           <div
             key={i}
-            className="w-2 h-2 rounded-full animate-pulse"
-            style={{
-              backgroundColor: '#FF8A1C',
-              opacity: 0.7,
-              animationDelay: `${i * 0.2}s`,
-            }}
+            className="h-2 w-2 animate-pulse rounded-full bg-primary/60"
+            style={{ animationDelay: `${i * 0.2}s` }}
           />
         ))}
       </div>

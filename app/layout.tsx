@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport = {
-  themeColor: '#243660',
+  themeColor: '#f8f9fb',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -24,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="bg-[#1a2847]">
+    <html lang="en" className="bg-background">
       <body className={`${inter.variable} font-sans antialiased`}>
         {children}
       </body>
